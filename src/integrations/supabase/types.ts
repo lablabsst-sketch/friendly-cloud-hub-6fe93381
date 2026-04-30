@@ -1637,6 +1637,7 @@ export type Database = {
           pais: string | null
           parentesco_contacto_emergencia: string | null
           pension: string | null
+          perfil_sociodemografico: Json | null
           rh: string | null
           sede: string | null
           telefono: string | null
@@ -1678,6 +1679,7 @@ export type Database = {
           pais?: string | null
           parentesco_contacto_emergencia?: string | null
           pension?: string | null
+          perfil_sociodemografico?: Json | null
           rh?: string | null
           sede?: string | null
           telefono?: string | null
@@ -1719,6 +1721,7 @@ export type Database = {
           pais?: string | null
           parentesco_contacto_emergencia?: string | null
           pension?: string | null
+          perfil_sociodemografico?: Json | null
           rh?: string | null
           sede?: string | null
           telefono?: string | null
