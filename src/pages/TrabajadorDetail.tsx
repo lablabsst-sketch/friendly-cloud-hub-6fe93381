@@ -72,7 +72,7 @@ export default function TrabajadorDetail() {
     if (!id) return;
     const { data } = await supabase.from("trabajadores").select("*").eq("id", id).single();
     setWorker(data);
-    setPerfil(data?.perfil_sociodemografico ?? {});
+    setPerfil((data?.perfil_sociodemografico as Partial<PerfilSocio>) ?? {});
     setLoading(false);
   };
 
