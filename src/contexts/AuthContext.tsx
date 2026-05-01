@@ -10,6 +10,7 @@ interface Empresa {
   num_empleados_directos: number | null;
   sector_industria: string | null;
   tiene_contratistas: boolean | null;
+  logo_url: string | null;
 }
 
 interface Usuario {
