@@ -19,6 +19,8 @@ export interface DashboardData {
   nivelProteccion: number;
   itemsPlanMejora: { total: number; completados: number };
   cumplimientoPhva: CumplimientoPhva | null;
+  proveedoresExpirando: number;
+  inspeccionesPendientes: number;
 }
 
 const empty: DashboardData = {
@@ -28,6 +30,8 @@ const empty: DashboardData = {
   docsProximosVencer: 0, docsVencidos: 0, nivelProteccion: 0,
   itemsPlanMejora: { total: 0, completados: 0 },
   cumplimientoPhva: null,
+  proveedoresExpirando: 0,
+  inspeccionesPendientes: 0,
 };
 
 export function useDashboardData(empresaId: string | null | undefined) {
@@ -53,6 +57,8 @@ export function useDashboardData(empresaId: string | null | undefined) {
         { data: docsTrab },
         { data: planItems },
         { data: cumplPhva },
+        { data: proveedores },
+        { data: inspecciones },
       ] = await Promise.all([
         supabase.from("trabajadores").select("id, estado").eq("empresa_id", empresaId).eq("eliminado", false),
         supabase.from("contratistas").select("id, nombre, estado").eq("empresa_id", empresaId).eq("estado", "activo").limit(5),
@@ -62,6 +68,8 @@ export function useDashboardData(empresaId: string | null | undefined) {
         supabase.from("documentos_trabajador").select("id, fecha_vencimiento").eq("empresa_id", empresaId).not("fecha_vencimiento", "is", null),
         supabase.from("items_plan_mejora").select("id, estado").eq("empresa_id", empresaId),
         supabase.rpc("get_cumplimiento_phva", { p_empresa_id: empresaId }),
+        (supabase as any).from("proveedores").select("id, fecha_fin_contrato").eq("empresa_id", empresaId).eq("estado", "activo").not("fecha_fin_contrato", "is", null),
+        (supabase as any).from("inspecciones").select("id, estado").eq("empresa_id", empresaId).in("estado", ["pendiente", "en-proceso"]),
       ]);
 
       const totalTrabajadores = trabajadores?.length ?? 0;
@@ -87,6 +95,11 @@ export function useDashboardData(empresaId: string | null | undefined) {
         if (planTotal > 0) nivel += 15;
       }
 
+      const proveedoresExpirando = (proveedores ?? []).filter((p: any) =>
+        p.fecha_fin_contrato >= hoyStr && p.fecha_fin_contrato <= en30Dias
+      ).length;
+      const inspeccionesPendientes = inspecciones?.length ?? 0;
+
       setData({
         totalTrabajadores, trabajadoresAprobados, trabajadoresPendientes,
         totalContratistas: contratistas?.length ?? 0,
@@ -97,6 +110,8 @@ export function useDashboardData(empresaId: string | null | undefined) {
         nivelProteccion: nivel,
         itemsPlanMejora: { total: planTotal, completados: planCompletados },
         cumplimientoPhva: cumplimientoData,
+        proveedoresExpirando,
+        inspeccionesPendientes,
       });
       setLoading(false);
     };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, BookOpen, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, GraduationCap, Layers, CheckSquare, FileWarning } from "lucide-react";
+import { AlertTriangle, BookOpen, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, GraduationCap, Layers, CheckSquare, FileWarning, ClipboardCheck, Truck } from "lucide-react";
 import { DashboardData } from "@/hooks/useDashboardData";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
@@ -338,6 +338,8 @@ export function DashboardPanels({ loading, data }: Props) {
             <StatusRow icon={AlertTriangle} label="Docs próximos a vencer" value={data.docsProximosVencer} okText="Sin alertas ✓" alertColor="#EF4444" onClick={() => navigate("/documentos")} />
             <StatusRow icon={CheckCircle2} label="Accidentes este año" value={data.accidentesAnio} okText="Sin accidentes ✓" alertColor="#EF4444" okColor="#16A34A" onClick={() => navigate("/accidentalidad")} />
             <StatusRow icon={CheckCircle2} label="Pendientes plan de mejora" value={data.itemsPlanMejora.total - data.itemsPlanMejora.completados} okText="Plan al día ✓" alertColor="#F59E0B" onClick={() => navigate("/plan-mejora")} />
+            <StatusRow icon={ClipboardCheck} label="Inspecciones abiertas" value={data.inspeccionesPendientes} okText="Sin pendientes ✓" alertColor="#F59E0B" onClick={() => navigate("/inspecciones")} />
+            <StatusRow icon={Truck} label="Contratos proveedores vencen pronto" value={data.proveedoresExpirando} okText="Contratos vigentes ✓" alertColor="#F59E0B" onClick={() => navigate("/proveedores")} />
           </div>
         </div>
       </div>
