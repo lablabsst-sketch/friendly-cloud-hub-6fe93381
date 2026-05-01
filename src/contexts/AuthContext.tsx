@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (inviteToken) {
       const { data: inv } = await (supabase as any)
         .from("invitaciones")
-        .select("empresa_id, rol, empresas(id, nombre, nit, nivel_proteccion, num_empleados_directos, sector_industria, tiene_contratistas)")
+        .select("empresa_id, rol, empresas(id, nombre, nit, nivel_proteccion, num_empleados_directos, sector_industria, tiene_contratistas, logo_url)")
         .eq("token", inviteToken)
         .eq("estado", "pendiente")
         .single();
@@ -136,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (empresaNit) {
       const { data: empresaExistente } = await supabase
         .from("empresas")
-        .select("id, nombre, nit, nivel_proteccion, num_empleados_directos, sector_industria, tiene_contratistas")
+        .select("id, nombre, nit, nivel_proteccion, num_empleados_directos, sector_industria, tiene_contratistas, logo_url")
         .eq("nit", empresaNit)
         .maybeSingle();
 
@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           num_empleados_directos: empresaNumEmpleados,
           tiene_contratistas: empresaTieneContratistas,
         })
-        .select("id, nombre, nit, nivel_proteccion, num_empleados_directos, sector_industria, tiene_contratistas")
+        .select("id, nombre, nit, nivel_proteccion, num_empleados_directos, sector_industria, tiene_contratistas, logo_url")
         .single();
 
       if (empresaError || !empresaCreada) {
@@ -227,7 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (usuario.empresa_id) {
         const { data, error } = await supabase
           .from("empresas")
-          .select("id, nombre, nit, nivel_proteccion, num_empleados_directos, sector_industria, tiene_contratistas")
+          .select("id, nombre, nit, nivel_proteccion, num_empleados_directos, sector_industria, tiene_contratistas, logo_url")
           .eq("id", usuario.empresa_id)
           .maybeSingle();
 
