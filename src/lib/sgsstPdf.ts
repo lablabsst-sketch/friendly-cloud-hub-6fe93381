@@ -55,25 +55,68 @@ const ESTADO_LABEL: Record<string, string> = {
 
 const fmt = (n: number) => (Number.isInteger(n) ? n.toString() : n.toFixed(1));
 
-export function exportSgsstPdf({ empresaNombre, empresaNit, cumplimiento, estandares }: ExportArgs) {
+/** Carga una imagen remota y la convierte a dataURL. Devuelve null si falla. */
+async function loadImageAsDataUrl(url: string): Promise<{ dataUrl: string; width: number; height: number; format: "PNG" | "JPEG" } | null> {
+  try {
+    const res = await fetch(url, { mode: "cors" });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+    const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+    const format: "PNG" | "JPEG" = blob.type.includes("png") ? "PNG" : "JPEG";
+    return { dataUrl, width: dims.w, height: dims.h, format };
+  } catch {
+    return null;
+  }
+}
+
+export async function exportSgsstPdf({ empresaNombre, empresaNit, empresaLogoUrl, cumplimiento, estandares }: ExportArgs) {
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageW = doc.internal.pageSize.getWidth();
   const margin = 40;
   let y = margin;
 
-  // Header
+  // Banda superior naranja
   doc.setFillColor(255, 107, 44);
   doc.rect(0, 0, pageW, 6, "F");
+
+  // Logo (si hay)
+  let titleX = margin;
+  if (empresaLogoUrl) {
+    const logo = await loadImageAsDataUrl(empresaLogoUrl);
+    if (logo) {
+      const maxH = 44;
+      const ratio = logo.width / logo.height;
+      const h = Math.min(maxH, logo.height);
+      const w = Math.min(h * ratio, 120);
+      try {
+        doc.addImage(logo.dataUrl, logo.format, margin, y + 4, w, h, undefined, "FAST");
+        titleX = margin + w + 14;
+      } catch {
+        // si addImage falla, seguimos sin logo
+      }
+    }
+  }
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.setTextColor(10, 14, 26);
-  doc.text("Reporte SG-SST", margin, y + 20);
+  doc.text("Reporte SG-SST", titleX, y + 20);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(100);
-  doc.text("Ciclo PHVA · Resolucion 0312 de 2019", margin, y + 36);
+  doc.text("Ciclo PHVA · Resolucion 0312 de 2019", titleX, y + 36);
 
   // Fecha (derecha)
   const fecha = new Date().toLocaleDateString("es-CO", {
