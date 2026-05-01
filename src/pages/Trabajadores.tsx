@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { canViewAll } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -72,7 +73,7 @@ export default function Trabajadores() {
   const [showModal, setShowModal] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
-  const canSeePerfil = usuario?.rol === "administrador" || usuario?.rol === "asistente";
+  const canSeePerfil = canViewAll(usuario?.rol);
 
   const fetchWorkers = useCallback(async () => {
     if (!empresa?.id) return;

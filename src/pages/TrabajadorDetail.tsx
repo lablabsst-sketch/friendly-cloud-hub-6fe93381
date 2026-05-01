@@ -12,6 +12,7 @@ import { AddWorkerModal } from "@/components/trabajadores/AddWorkerModal";
 import { DocumentosTrabajador } from "@/components/trabajadores/DocumentosTrabajador";
 import { PerfilSocioModal, type PerfilSocio } from "@/components/trabajadores/PerfilSocioModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { canViewAll } from "@/lib/roles";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -66,17 +67,23 @@ export default function TrabajadorDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const [perfilOpen, setPerfilOpen] = useState(false);
 
-  const canSeePerfil = usuario?.rol === "administrador" || usuario?.rol === "asistente";
+  const canSeePerfil = canViewAll(usuario?.rol);
 
   const fetchWorker = async () => {
-    if (!id) return;
-    const { data } = await supabase.from("trabajadores").select("*").eq("id", id).single();
+    if (!id || !empresa?.id) return;
+    const { data } = await (supabase as any)
+      .from("trabajadores")
+      .select("*")
+      .eq("id", id)
+      .eq("empresa_id", empresa.id)  // Defensa en profundidad — RLS ya filtra, pero validamos también en cliente
+      .maybeSingle();
+    if (!data) { setLoading(false); return; }
     setWorker(data);
     setPerfil((data?.perfil_sociodemografico as Partial<PerfilSocio>) ?? {});
     setLoading(false);
   };
 
-  useEffect(() => { fetchWorker(); }, [id]);
+  useEffect(() => { if (empresa?.id) fetchWorker(); }, [id, empresa?.id]);
 
   const initials = worker ? `${worker.nombres?.[0] || ""}${worker.apellidos?.[0] || ""}`.toUpperCase() : "?";
   const fullName = worker ? `${worker.nombres} ${worker.apellidos}` : "";
