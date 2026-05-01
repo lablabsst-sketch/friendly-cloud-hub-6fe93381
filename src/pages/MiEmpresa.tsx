@@ -210,7 +210,7 @@ export default function MiEmpresa() {
       let url: string | null = null;
       if (docFile) {
         const ext = docFile.name.split(".").pop();
-        const path = `empresa/${authEmpresa.id}/${Date.now()}.${ext}`;
+        const path = `${authEmpresa.id}/empresa/${Date.now()}.${ext}`;
         await supabase.storage.from("documentos").upload(path, docFile, { upsert: true });
         const { data: { publicUrl } } = supabase.storage.from("documentos").getPublicUrl(path);
         url = publicUrl;
