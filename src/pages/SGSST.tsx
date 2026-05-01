@@ -199,9 +199,10 @@ export default function SGSST() {
           plantilla_subida: !!d?.plantilla_url,
         };
       });
-      exportSgsstPdf({
+      await exportSgsstPdf({
         empresaNombre: empresa.nombre ?? "Empresa",
         empresaNit: empresa.nit ?? null,
+        empresaLogoUrl: empresa.logo_url ?? null,
         cumplimiento,
         estandares: items,
       });
