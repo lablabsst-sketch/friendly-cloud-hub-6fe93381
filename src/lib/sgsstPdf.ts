@@ -35,6 +35,7 @@ export interface EstandarExport {
 interface ExportArgs {
   empresaNombre: string;
   empresaNit?: string | null;
+  empresaLogoUrl?: string | null;
   cumplimiento: CumplimientoData;
   estandares: EstandarExport[];
 }
