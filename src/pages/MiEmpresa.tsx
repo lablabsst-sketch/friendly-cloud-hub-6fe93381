@@ -296,7 +296,7 @@ export default function MiEmpresa() {
 
   const handleChangeRol = async (userId: string, newRol: string) => {
     await supabase.from("usuarios").update({ rol: newRol }).eq("id", userId);
-    await supabase.from("user_roles").update({ role: newRol }).eq("user_id", userId);
+    await supabase.from("user_roles").update({ role: newRol as "super_admin" | "administrador" | "asistente" | "lector" }).eq("user_id", userId);
     setEquipo(prev => prev.map(u => u.id === userId ? { ...u, rol: newRol } : u));
     toast({ title: "Rol actualizado" });
   };
