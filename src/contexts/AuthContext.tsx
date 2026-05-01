@@ -94,6 +94,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nombre = firstName || fullName;
     const apellido = restName.join(" ") || null;
 
+    // ── Invite token path ─────────────────────────────────────────────────
+    const inviteToken = typeof metadata.invite_token === "string" ? metadata.invite_token : null;
+    if (inviteToken) {
+      const { data: inv } = await (supabase as any)
+        .from("invitaciones")
+        .select("empresa_id, rol, empresas(id, nombre, nit, nivel_proteccion, num_empleados_directos, sector_industria, tiene_contratistas)")
+        .eq("token", inviteToken)
+        .eq("estado", "pendiente")
+        .single();
+      if (inv) {
+        const nombreCompleto = [nombre, apellido].filter(Boolean).join(" ");
+        const { data: usuarioCreado } = await supabase.from("usuarios").insert({
+          user_id: authUser.id,
+          auth_user_id: authUser.id,
+          empresa_id: inv.empresa_id,
+          nombre,
+          apellido,
+          nombre_completo: nombreCompleto,
+          email: authUser.email ?? "",
+          rol: inv.rol,
+        }).select("id, nombre, apellido, cargo, empresa_id, nombre_completo, rol").single();
+
+        await supabase.from("user_roles").insert({ user_id: authUser.id, role: inv.rol });
+        await (supabase as any).from("invitaciones").update({ estado: "aceptada", accepted_at: new Date().toISOString() }).eq("token", inviteToken);
+
+        if (usuarioCreado && inv.empresas) {
+          return { usuario: usuarioCreado, empresa: inv.empresas, error: null };
+        }
+      }
+      return { usuario: null, empresa: null, error: "Invitación inválida o expirada. Contacta al administrador." };
+    }
+
     if (!empresaNombre) {
       return { usuario: null, empresa: null, error: "Perfil de usuario no encontrado. Contacta soporte." };
     }

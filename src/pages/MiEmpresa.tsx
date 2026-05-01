@@ -24,8 +24,10 @@ import {
   Building2, Pencil, Save, X, Upload, Users, ShieldCheck,
   Phone, Mail, MapPin, Hash, Briefcase, AlertTriangle, UserCheck,
   FileText, Plus, Trash2, ExternalLink, Clock, CheckCircle2,
+  UserPlus, Copy, Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { canAdmin } from "@/lib/roles";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,6 +50,23 @@ interface EmpresaFull {
   num_empleados_indirectos: number | null;
   tiene_contratistas: boolean | null;
   logo_url: string | null;
+}
+
+interface UsuarioTeam {
+  id: string;
+  nombre_completo: string | null;
+  email: string;
+  rol: string | null;
+  cargo: string | null;
+}
+
+interface Invitacion {
+  id: string;
+  email: string;
+  rol: string;
+  token: string;
+  estado: string;
+  created_at: string;
 }
 
 interface DocEmpresa {
@@ -99,7 +118,7 @@ const DEPARTAMENTOS = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function MiEmpresa() {
-  const { empresa: authEmpresa } = useAuth();
+  const { empresa: authEmpresa, usuario } = useAuth();
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -121,6 +140,17 @@ export default function MiEmpresa() {
   const [docForm, setDocForm] = useState({ nombre: "", tipo: "", tieneVenc: false, fechaVenc: "" });
   const docFileRef = useRef<HTMLInputElement>(null);
   const [docFile, setDocFile] = useState<File | null>(null);
+
+  // Equipo
+  const [equipo, setEquipo] = useState<UsuarioTeam[]>([]);
+  const [invitaciones, setInvitaciones] = useState<Invitacion[]>([]);
+  const [loadingEquipo, setLoadingEquipo] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteForm, setInviteForm] = useState({ email: "", rol: "lector" });
+  const [savingInvite, setSavingInvite] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [removingUserId, setRemovingUserId] = useState<string | null>(null);
 
   // ── Fetch docs ───────────────────────────────────────────────────────────
 
@@ -246,6 +276,68 @@ export default function MiEmpresa() {
     setDeleteDocId(null);
     fetchDocs();
     toast({ title: "Documento eliminado" });
+  };
+
+  // ── Equipo ────────────────────────────────────────────────────────────────
+
+  const fetchEquipo = useCallback(async () => {
+    if (!authEmpresa?.id) return;
+    setLoadingEquipo(true);
+    const [{ data: users }, { data: invs }] = await Promise.all([
+      supabase.from("usuarios").select("id, nombre_completo, email, rol, cargo").eq("empresa_id", authEmpresa.id).order("nombre_completo"),
+      (supabase as any).from("invitaciones").select("id, email, rol, token, estado, created_at").eq("empresa_id", authEmpresa.id).eq("estado", "pendiente").order("created_at", { ascending: false }),
+    ]);
+    setEquipo(users ?? []);
+    setInvitaciones(invs ?? []);
+    setLoadingEquipo(false);
+  }, [authEmpresa?.id]);
+
+  useEffect(() => { if (canAdmin(usuario?.rol)) fetchEquipo(); }, [fetchEquipo, usuario?.rol]);
+
+  const handleChangeRol = async (userId: string, newRol: string) => {
+    await supabase.from("usuarios").update({ rol: newRol }).eq("id", userId);
+    await supabase.from("user_roles").update({ role: newRol }).eq("user_id", userId);
+    setEquipo(prev => prev.map(u => u.id === userId ? { ...u, rol: newRol } : u));
+    toast({ title: "Rol actualizado" });
+  };
+
+  const handleRemoveUser = async () => {
+    if (!removingUserId) return;
+    await supabase.from("usuarios").update({ empresa_id: null }).eq("id", removingUserId);
+    setEquipo(prev => prev.filter(u => u.id !== removingUserId));
+    setRemovingUserId(null);
+    toast({ title: "Usuario eliminado del equipo" });
+  };
+
+  const handleRevokeInvite = async (invId: string) => {
+    await (supabase as any).from("invitaciones").update({ estado: "revocada" }).eq("id", invId);
+    setInvitaciones(prev => prev.filter(i => i.id !== invId));
+    toast({ title: "Invitación revocada" });
+  };
+
+  const handleInvite = async () => {
+    if (!authEmpresa?.id || !inviteForm.email.trim()) return;
+    setSavingInvite(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from("invitaciones")
+        .insert({ empresa_id: authEmpresa.id, email: inviteForm.email.trim().toLowerCase(), rol: inviteForm.rol })
+        .select("token")
+        .single();
+      if (error) throw error;
+      setGeneratedLink(`${window.location.origin}/register?inv=${data.token}`);
+      fetchEquipo();
+    } catch {
+      toast({ title: "Error al crear invitación", variant: "destructive" });
+    } finally {
+      setSavingInvite(false);
+    }
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(generatedLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // ── Logo upload ───────────────────────────────────────────────────────────
@@ -611,6 +703,92 @@ export default function MiEmpresa() {
             </div>
           )}
         </div>
+
+        {/* ── Equipo ── */}
+        {canAdmin(usuario?.rol) && (
+          <div className="bg-surface rounded-xl border-[0.5px] border-border p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[13px] font-medium flex items-center gap-2">
+                <Users className="w-4 h-4 text-muted-foreground" /> Equipo de Usuarios
+              </h3>
+              <Button size="sm" onClick={() => { setInviteForm({ email: "", rol: "lector" }); setGeneratedLink(""); setInviteOpen(true); }}>
+                <UserPlus className="w-3.5 h-3.5 mr-1.5" /> Invitar
+              </Button>
+            </div>
+
+            {loadingEquipo ? (
+              <div className="space-y-2">
+                {[1,2].map(i => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}
+              </div>
+            ) : (
+              <div className="divide-y">
+                {equipo.map(u => {
+                  const isMe = u.id === usuario?.id;
+                  const initials = (u.nombre_completo ?? u.email).slice(0, 2).toUpperCase();
+                  return (
+                    <div key={u.id} className="flex items-center gap-3 py-2.5 group">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary text-[11px] font-semibold flex items-center justify-center shrink-0">
+                        {initials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-medium truncate">{u.nombre_completo ?? u.email}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={u.rol ?? "lector"}
+                          onValueChange={v => !isMe && handleChangeRol(u.id, v)}
+                          disabled={isMe}
+                        >
+                          <SelectTrigger className="h-7 w-32 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="administrador">Administrador</SelectItem>
+                            <SelectItem value="asistente">Asistente</SelectItem>
+                            <SelectItem value="lector">Lector</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {!isMe && (
+                          <Button
+                            variant="ghost" size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => setRemovingUserId(u.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Pending invitations */}
+            {invitaciones.length > 0 && (
+              <div className="mt-4 pt-3 border-t">
+                <p className="text-[11px] text-muted-foreground mb-2">Invitaciones pendientes</p>
+                <div className="space-y-1.5">
+                  {invitaciones.map(inv => (
+                    <div key={inv.id} className="flex items-center gap-2 group">
+                      <Mail className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
+                      <span className="text-[12px] flex-1 truncate">{inv.email}</span>
+                      <Badge variant="outline" className="text-[10px] h-4 px-1">{inv.rol}</Badge>
+                      <Button
+                        variant="ghost" size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRevokeInvite(inv.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Upload doc dialog ── */}
@@ -669,6 +847,73 @@ export default function MiEmpresa() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Invite dialog ── */}
+      <Dialog open={inviteOpen} onOpenChange={v => { if (!v) { setInviteOpen(false); setGeneratedLink(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Invitar usuario</DialogTitle></DialogHeader>
+          {generatedLink ? (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">Comparte este enlace con la persona invitada. Expira cuando lo use.</p>
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                <p className="text-[11px] text-muted-foreground flex-1 break-all font-mono">{generatedLink}</p>
+                <Button variant="outline" size="icon" className="shrink-0 h-8 w-8" onClick={copyLink}>
+                  {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                </Button>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => { setInviteOpen(false); setGeneratedLink(""); }}>Listo</Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label>Correo electrónico *</Label>
+                <Input
+                  type="email"
+                  value={inviteForm.email}
+                  onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))}
+                  placeholder="colaborador@empresa.com"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Rol</Label>
+                <Select value={inviteForm.rol} onValueChange={v => setInviteForm(p => ({ ...p, rol: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="administrador">Administrador — acceso total</SelectItem>
+                    <SelectItem value="asistente">Asistente — edita, no administra</SelectItem>
+                    <SelectItem value="lector">Lector — solo lectura</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                El sistema generará un enlace de invitación. Envíaselo manualmente por correo o WhatsApp.
+              </p>
+              <DialogFooter>
+                <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+                <Button onClick={handleInvite} disabled={savingInvite || !inviteForm.email.trim()}>
+                  {savingInvite ? "Generando…" : "Generar enlace"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Remove user confirm ── */}
+      <AlertDialog open={!!removingUserId} onOpenChange={open => !open && setRemovingUserId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar usuario del equipo?</AlertDialogTitle>
+            <AlertDialogDescription>El usuario perderá acceso a la plataforma pero su cuenta se mantiene.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveUser} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* ── Delete doc confirm ── */}
       <AlertDialog open={!!deleteDocId} onOpenChange={open => !open && setDeleteDocId(null)}>

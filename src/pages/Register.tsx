@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logoSstlink from "@/assets/logo-sstlink.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { StepIndicator } from "@/components/auth/StepIndicator";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { z } from "zod";
 
 const STEPS = ["Empresa", "Administrador", "Detalles SST", "Confirmación"];
@@ -40,6 +40,32 @@ export default function Register() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+
+  // Invite mode
+  const invToken = searchParams.get("inv");
+  const [invEmpresaNombre, setInvEmpresaNombre] = useState<string | null>(null);
+  const [invRol, setInvRol] = useState<string | null>(null);
+  const [invValid, setInvValid] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!invToken) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("invitaciones")
+        .select("rol, estado, empresas(nombre)")
+        .eq("token", invToken)
+        .eq("estado", "pendiente")
+        .single();
+      if (data) {
+        setInvRol(data.rol);
+        setInvEmpresaNombre(data.empresas?.nombre ?? null);
+        setInvValid(true);
+      } else {
+        setInvValid(false);
+      }
+    })();
+  }, [invToken]);
 
   // Step 1
   const [nit, setNit] = useState("");
@@ -165,6 +191,132 @@ export default function Register() {
       setLoading(false);
     }
   };
+
+  // ── Invite mode finish ────────────────────────────────────────────────────
+  const handleFinishInvite = async () => {
+    const r = step2Schema.safeParse({ fullName, email, password });
+    if (!r.success) {
+      const fe: Record<string, string> = {};
+      r.error.errors.forEach(e => { if (e.path[0]) fe[e.path[0] as string] = e.message; });
+      setErrors(fe);
+      return;
+    }
+    setErrors({});
+    setLoading(true);
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { nombre: fullName, invite_token: invToken } },
+      });
+      if (authError) throw authError;
+      const authUserId = authData.user?.id;
+      if (!authUserId) throw new Error("No se pudo crear la sesión.");
+
+      // Look up invitation (user now has a session)
+      const { data: inv, error: invErr } = await (supabase as any)
+        .from("invitaciones")
+        .select("empresa_id, rol")
+        .eq("token", invToken)
+        .eq("estado", "pendiente")
+        .single();
+      if (invErr || !inv) throw new Error("La invitación ya no es válida.");
+
+      const [firstName, ...rest] = fullName.trim().split(" ").filter(Boolean);
+      const apellido = rest.join(" ") || null;
+
+      const { error: uErr } = await supabase.from("usuarios").insert({
+        user_id: authUserId,
+        auth_user_id: authUserId,
+        empresa_id: inv.empresa_id,
+        nombre: firstName || fullName.trim(),
+        apellido,
+        nombre_completo: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        rol: inv.rol,
+      });
+      if (uErr) throw uErr;
+
+      await supabase.from("user_roles").insert({ user_id: authUserId, role: inv.rol });
+      await (supabase as any)
+        .from("invitaciones")
+        .update({ estado: "aceptada", accepted_at: new Date().toISOString() })
+        .eq("token", invToken);
+
+      setSuccess(true);
+    } catch (err: any) {
+      toast({ title: "Error en el registro", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Invite mode: invalid token ─────────────────────────────────────────────
+  if (invToken && invValid === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="bg-card rounded-xl border-[0.5px] border-border p-8">
+            <p className="text-sm text-destructive font-medium mb-4">Esta invitación no es válida o ya fue usada.</p>
+            <Button variant="outline" onClick={() => navigate("/login")}>Ir al inicio de sesión</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Invite mode: simplified registration ───────────────────────────────────
+  if (invToken && invValid === true) {
+    const ROL_LABEL: Record<string, string> = { administrador: "Administrador", asistente: "Asistente", lector: "Lector" };
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+        <div className="w-full max-w-sm">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <img src={logoSstlink} alt="SSTLink" className="h-10 w-auto" />
+          </div>
+          {success ? (
+            <div className="bg-card rounded-xl border-[0.5px] border-border p-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-8 h-8 text-secondary" />
+              </div>
+              <h1 className="text-lg font-medium mb-2">¡Bienvenido al equipo!</h1>
+              <p className="text-sm text-muted-foreground mb-6">Tu cuenta fue creada. Revisa tu correo para confirmarla antes de iniciar sesión.</p>
+              <Button onClick={() => navigate("/login")} className="w-full">Ir al inicio de sesión</Button>
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl border-[0.5px] border-border p-6 space-y-5">
+              <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg">
+                <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-[13px] font-medium">Fuiste invitado a unirte</p>
+                  {invEmpresaNombre && <p className="text-[12px] text-muted-foreground">{invEmpresaNombre}</p>}
+                  {invRol && <p className="text-[11px] text-muted-foreground">Rol: {ROL_LABEL[invRol] ?? invRol}</p>}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Nombre completo</Label>
+                <Input placeholder="Tu nombre" value={fullName} onChange={e => setFullName(e.target.value)} />
+                {errors.fullName && <p className="text-xs text-destructive">{errors.fullName}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Correo electrónico</Label>
+                <Input type="email" placeholder="tu@correo.com" value={email} onChange={e => setEmail(e.target.value)} />
+                {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Contraseña</Label>
+                <Input type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} />
+                {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+              </div>
+              <Button onClick={handleFinishInvite} disabled={loading} className="w-full">
+                {loading ? "Creando cuenta…" : "Unirme al equipo"}
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
