@@ -8,10 +8,11 @@ import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ChevronDown, ShieldCheck, Info, X } from "lucide-react";
+import { ChevronDown, ShieldCheck, Info, X, FileDown, Loader2 } from "lucide-react";
 import { EstandarRow } from "@/components/sgsst/EstandarRow";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { exportSgsstPdf, type EstandarExport } from "@/lib/sgsstPdf";
 
 const NIVELES = [
   { value: "7", label: "7 estándares" },
