@@ -177,19 +177,66 @@ export default function SGSST() {
 
   const fmt = (n: number) => Number.isInteger(n) ? n.toString() : n.toFixed(1);
 
+  const [exporting, setExporting] = useState(false);
+  const handleExportPdf = async () => {
+    if (!cumplimiento || !empresa) {
+      toast.error("Aún no hay datos de cumplimiento para exportar");
+      return;
+    }
+    setExporting(true);
+    try {
+      const items: EstandarExport[] = filteredEstandares.map(e => {
+        const d = getDocForEstandar(e.id);
+        const estado = (d?.estado ?? "sin_iniciar") as EstandarExport["estado"];
+        return {
+          codigo: e.codigo,
+          nombre: e.nombre,
+          fase: e.fase,
+          grupo: e.grupo,
+          puntaje: e.puntaje ?? 0,
+          estado,
+          doc_subido: !!d?.doc_url,
+          plantilla_subida: !!d?.plantilla_url,
+        };
+      });
+      exportSgsstPdf({
+        empresaNombre: empresa.nombre ?? "Empresa",
+        empresaNit: empresa.nit ?? null,
+        cumplimiento,
+        estandares: items,
+      });
+      toast.success("Reporte SG-SST generado");
+    } catch (err) {
+      console.error(err);
+      toast.error("No se pudo generar el PDF");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <TooltipProvider delayDuration={150}>
       <AppLayout breadcrumbs={["SSTLink", "SG-SST"]}>
         <div className="space-y-4 max-w-6xl">
           {/* Header */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
               <ShieldCheck className="w-5 h-5 text-primary" />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-[180px]">
               <h1 className="text-[17px] font-medium">Sistema de Gestión SG-SST</h1>
               <p className="text-[12px] text-muted-foreground">Ciclo PHVA · Resolución 0312 de 2019</p>
             </div>
+            <Button
+              variant="default"
+              size="sm"
+              className="h-8 text-[12px] gap-1.5"
+              disabled={exporting || loading || !cumplimiento}
+              onClick={handleExportPdf}
+            >
+              {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
+              Exportar PDF
+            </Button>
             {!showInstrucciones && (
               <Button variant="outline" size="sm" className="h-8 text-[12px] gap-1.5"
                 onClick={() => setShowInstrucciones(true)}>
