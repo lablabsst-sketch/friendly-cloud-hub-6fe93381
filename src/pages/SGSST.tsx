@@ -50,21 +50,62 @@ interface CumplimientoData {
 }
 
 const INSTRUCCIONES_KEY = "sgsst_instrucciones_dismissed";
+const FASES_KEY = (eid: string) => `sgsst_open_fases_${eid}`;
+const NIVEL_KEY = (eid: string) => `sgsst_nivel_${eid}`;
+const DEFAULT_FASES = { PLANEAR: true, HACER: false, VERIFICAR: false, ACTUAR: false };
+
+function readJSON<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export default function SGSST() {
   const { empresa } = useAuth();
   const empresaId = empresa?.id;
 
-  const [nivel, setNivel] = useState<string>("21");
+  const [nivel, setNivel] = useState<string>(() =>
+    empresaId ? localStorage.getItem(NIVEL_KEY(empresaId)) ?? "21" : "21"
+  );
   const [estandares, setEstandares] = useState<Estandar[]>([]);
   const [docs, setDocs] = useState<DocEstandar[]>([]);
   const [cumplimiento, setCumplimiento] = useState<CumplimientoData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [openFases, setOpenFases] = useState<Record<string, boolean>>({ PLANEAR: true, HACER: false, VERIFICAR: false, ACTUAR: false });
+  const [openFases, setOpenFases] = useState<Record<string, boolean>>(() =>
+    empresaId ? readJSON(FASES_KEY(empresaId), DEFAULT_FASES) : DEFAULT_FASES
+  );
   const [showInstrucciones, setShowInstrucciones] = useState(() => {
     if (typeof window === "undefined") return true;
     return localStorage.getItem(INSTRUCCIONES_KEY) !== "1";
   });
+
+  // Re-hidratar al cambiar de empresa (si aún no estaba disponible al montar)
+  useEffect(() => {
+    if (!empresaId) return;
+    const savedNivel = localStorage.getItem(NIVEL_KEY(empresaId));
+    if (savedNivel) setNivel(savedNivel);
+    setOpenFases(readJSON(FASES_KEY(empresaId), DEFAULT_FASES));
+  }, [empresaId]);
+
+  // Persistir acordeones
+  useEffect(() => {
+    if (!empresaId) return;
+    try {
+      localStorage.setItem(FASES_KEY(empresaId), JSON.stringify(openFases));
+    } catch { /* quota */ }
+  }, [openFases, empresaId]);
+
+  // Persistir nivel
+  useEffect(() => {
+    if (!empresaId || !nivel) return;
+    try {
+      localStorage.setItem(NIVEL_KEY(empresaId), nivel);
+    } catch { /* quota */ }
+  }, [nivel, empresaId]);
 
   const dismissInstrucciones = () => {
     localStorage.setItem(INSTRUCCIONES_KEY, "1");
@@ -84,7 +125,10 @@ export default function SGSST() {
 
     setEstandares((estData as Estandar[]) ?? []);
     setDocs((docsData as DocEstandar[]) ?? []);
-    if (nivelData?.nivel) setNivel(nivelData.nivel);
+    // Solo aplicar nivel del servidor si el usuario no tiene preferencia local
+    if (nivelData?.nivel && !localStorage.getItem(NIVEL_KEY(empresaId))) {
+      setNivel(nivelData.nivel);
+    }
     if (cumplData) setCumplimiento(cumplData as unknown as CumplimientoData);
     setLoading(false);
   }, [empresaId]);
