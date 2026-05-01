@@ -1515,6 +1515,66 @@ export type Database = {
           },
         ]
       }
+      proveedores: {
+        Row: {
+          arl: string | null
+          ciudad: string | null
+          created_at: string | null
+          departamento: string | null
+          email: string | null
+          empresa_id: string
+          estado: string | null
+          fecha_fin_contrato: string | null
+          fecha_inicio_contrato: string | null
+          id: string
+          nit: string | null
+          nombre: string
+          notas: string | null
+          representante: string | null
+          telefono: string | null
+          tipo_servicio: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          arl?: string | null
+          ciudad?: string | null
+          created_at?: string | null
+          departamento?: string | null
+          email?: string | null
+          empresa_id: string
+          estado?: string | null
+          fecha_fin_contrato?: string | null
+          fecha_inicio_contrato?: string | null
+          id?: string
+          nit?: string | null
+          nombre: string
+          notas?: string | null
+          representante?: string | null
+          telefono?: string | null
+          tipo_servicio?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          arl?: string | null
+          ciudad?: string | null
+          created_at?: string | null
+          departamento?: string | null
+          email?: string | null
+          empresa_id?: string
+          estado?: string | null
+          fecha_fin_contrato?: string | null
+          fecha_inicio_contrato?: string | null
+          id?: string
+          nit?: string | null
+          nombre?: string
+          notas?: string | null
+          representante?: string | null
+          telefono?: string | null
+          tipo_servicio?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       sedes: {
         Row: {
           ciudad: string | null
