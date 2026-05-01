@@ -1,0 +1,472 @@
+import { useEffect, useState, useCallback } from "react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { canEdit } from "@/lib/roles";
+import {
+  Plus, Search, Truck, Pencil, Trash2, AlertTriangle,
+  Phone, Mail, Building2, ShieldCheck, CalendarClock,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+interface Proveedor {
+  id: string;
+  empresa_id: string;
+  nombre: string;
+  nit: string | null;
+  tipo_servicio: string | null;
+  representante: string | null;
+  email: string | null;
+  telefono: string | null;
+  ciudad: string | null;
+  departamento: string | null;
+  arl: string | null;
+  fecha_inicio_contrato: string | null;
+  fecha_fin_contrato: string | null;
+  estado: string;
+  notas: string | null;
+  created_at: string;
+}
+
+type FormData = Omit<Proveedor, "id" | "empresa_id" | "created_at">;
+
+const blank: FormData = {
+  nombre: "", nit: "", tipo_servicio: "", representante: "",
+  email: "", telefono: "", ciudad: "", departamento: "",
+  arl: "", fecha_inicio_contrato: "", fecha_fin_contrato: "",
+  estado: "activo", notas: "",
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+const ESTADO_STYLES: Record<string, string> = {
+  activo:        "bg-emerald-100 text-emerald-700 border-emerald-200",
+  en_evaluacion: "bg-amber-100 text-amber-700 border-amber-200",
+  suspendido:    "bg-red-100 text-red-700 border-red-200",
+  inactivo:      "bg-slate-100 text-slate-500 border-slate-200",
+};
+
+const ESTADO_LABEL: Record<string, string> = {
+  activo: "Activo", en_evaluacion: "En evaluación",
+  suspendido: "Suspendido", inactivo: "Inactivo",
+};
+
+function diasParaVencer(fecha: string | null): number | null {
+  if (!fecha) return null;
+  return Math.ceil((new Date(fecha).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
+function fmt(date: string | null): string {
+  if (!date) return "—";
+  return new Date(date + "T00:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
+export default function Proveedores() {
+  const { empresa, usuario } = useAuth();
+  const { toast } = useToast();
+  const puedeEditar = canEdit(usuario?.rol);
+
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filterEstado, setFilterEstado] = useState("todos");
+
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Proveedor | null>(null);
+  const [form, setForm] = useState<FormData>(blank);
+  const [saving, setSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // ── Fetch ────────────────────────────────────────────────────────────────────
+  const fetchProveedores = useCallback(async () => {
+    if (!empresa?.id) return;
+    setLoading(true);
+    const { data, error } = await (supabase as any)
+      .from("proveedores")
+      .select("*")
+      .eq("empresa_id", empresa.id)
+      .order("nombre");
+    if (error) toast({ title: "Error al cargar proveedores", description: error.message, variant: "destructive" });
+    else setProveedores(data ?? []);
+    setLoading(false);
+  }, [empresa?.id]);
+
+  useEffect(() => { fetchProveedores(); }, [fetchProveedores]);
+
+  // ── Dialog helpers ───────────────────────────────────────────────────────────
+  const openNew = () => {
+    setEditing(null);
+    setForm(blank);
+    setDialogOpen(true);
+  };
+
+  const openEdit = (p: Proveedor) => {
+    setEditing(p);
+    setForm({
+      nombre: p.nombre, nit: p.nit ?? "", tipo_servicio: p.tipo_servicio ?? "",
+      representante: p.representante ?? "", email: p.email ?? "", telefono: p.telefono ?? "",
+      ciudad: p.ciudad ?? "", departamento: p.departamento ?? "", arl: p.arl ?? "",
+      fecha_inicio_contrato: p.fecha_inicio_contrato ?? "", fecha_fin_contrato: p.fecha_fin_contrato ?? "",
+      estado: p.estado, notas: p.notas ?? "",
+    });
+    setDialogOpen(true);
+  };
+
+  const set = (k: keyof FormData) => (v: string) => setForm(p => ({ ...p, [k]: v }));
+  const setEv = (k: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm(p => ({ ...p, [k]: e.target.value }));
+
+  // ── Save ─────────────────────────────────────────────────────────────────────
+  const handleSave = async () => {
+    if (!form.nombre.trim()) {
+      toast({ title: "El nombre del proveedor es requerido", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    const payload = {
+      ...form,
+      empresa_id: empresa!.id,
+      nit: form.nit || null,
+      tipo_servicio: form.tipo_servicio || null,
+      representante: form.representante || null,
+      email: form.email || null,
+      telefono: form.telefono || null,
+      ciudad: form.ciudad || null,
+      departamento: form.departamento || null,
+      arl: form.arl || null,
+      fecha_inicio_contrato: form.fecha_inicio_contrato || null,
+      fecha_fin_contrato: form.fecha_fin_contrato || null,
+      notas: form.notas || null,
+    };
+
+    const { error } = editing
+      ? await (supabase as any).from("proveedores").update(payload).eq("id", editing.id)
+      : await (supabase as any).from("proveedores").insert(payload);
+
+    setSaving(false);
+    if (error) {
+      toast({ title: "Error al guardar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: editing ? "Proveedor actualizado" : "Proveedor agregado" });
+      setDialogOpen(false);
+      fetchProveedores();
+    }
+  };
+
+  // ── Delete ───────────────────────────────────────────────────────────────────
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    const { error } = await (supabase as any).from("proveedores").delete().eq("id", deleteId);
+    if (error) toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
+    else { toast({ title: "Proveedor eliminado" }); fetchProveedores(); }
+    setDeleteId(null);
+  };
+
+  // ── Stats ────────────────────────────────────────────────────────────────────
+  const activos = proveedores.filter(p => p.estado === "activo").length;
+  const proximosVencer = proveedores.filter(p => {
+    const d = diasParaVencer(p.fecha_fin_contrato);
+    return d !== null && d >= 0 && d <= 30;
+  }).length;
+
+  // ── Filter ───────────────────────────────────────────────────────────────────
+  const filtered = proveedores.filter(p => {
+    const matchSearch = !search || p.nombre.toLowerCase().includes(search.toLowerCase()) ||
+      (p.nit ?? "").includes(search) || (p.tipo_servicio ?? "").toLowerCase().includes(search.toLowerCase());
+    const matchEstado = filterEstado === "todos" || p.estado === filterEstado;
+    return matchSearch && matchEstado;
+  });
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+  return (
+    <AppLayout breadcrumbs={["SSTLink", "Proveedores"]}>
+      <div className="space-y-4 max-w-6xl">
+
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-medium text-foreground">Proveedores</h1>
+            {loading ? <Skeleton className="h-4 w-24 mt-1" /> :
+              <p className="text-xs text-muted-foreground">{activos} activos · {proveedores.length} total</p>}
+          </div>
+          {puedeEditar && (
+            <Button onClick={openNew} className="gap-1.5 text-xs h-9">
+              <Plus className="w-3.5 h-3.5" /> Agregar proveedor
+            </Button>
+          )}
+        </div>
+
+        {/* Stats */}
+        {!loading && proveedores.length > 0 && (
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: "Total", value: proveedores.length, icon: Truck,         color: "bg-indigo-100 text-indigo-600" },
+              { label: "Activos",   value: activos,         icon: ShieldCheck,   color: "bg-emerald-100 text-emerald-600" },
+              { label: "Contratos próx. a vencer", value: proximosVencer, icon: CalendarClock, color: proximosVencer > 0 ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500" },
+            ].map(s => (
+              <div key={s.label} className="rounded-xl border bg-card p-3 flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${s.color}`}>
+                  <s.icon className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold leading-none">{s.value}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{s.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-hint" />
+            <Input placeholder="Buscar por nombre, NIT o tipo de servicio…"
+              value={search} onChange={e => setSearch(e.target.value)}
+              className="pl-9 h-8 text-xs bg-background" />
+          </div>
+          <Select value={filterEstado} onValueChange={setFilterEstado}>
+            <SelectTrigger className="w-full sm:w-40 h-8 text-xs">
+              <SelectValue placeholder="Estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="activo">Activo</SelectItem>
+              <SelectItem value="en_evaluacion">En evaluación</SelectItem>
+              <SelectItem value="suspendido">Suspendido</SelectItem>
+              <SelectItem value="inactivo">Inactivo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="space-y-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>
+        ) : filtered.length === 0 && proveedores.length === 0 ? (
+          <div className="bg-card rounded-xl border p-12 flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mb-4">
+              <Truck className="w-6 h-6 text-primary" />
+            </div>
+            <p className="text-sm font-medium mb-1">Sin proveedores registrados</p>
+            <p className="text-xs text-muted-foreground mb-4">Registra los proveedores y contratistas que trabajan con tu empresa.</p>
+            {puedeEditar && (
+              <Button onClick={openNew} className="gap-1.5 text-xs h-9">
+                <Plus className="w-3.5 h-3.5" /> Agregar primer proveedor
+              </Button>
+            )}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="bg-card rounded-xl border p-8 text-center">
+            <p className="text-sm text-muted-foreground">No se encontraron proveedores con esos filtros.</p>
+          </div>
+        ) : (
+          <div className="bg-card rounded-xl border overflow-hidden">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b bg-background">
+                  {["Proveedor", "Tipo de servicio", "ARL", "Contrato", "Estado", ""].map(h => (
+                    <th key={h} className="text-left px-4 py-3 font-medium text-muted-foreground uppercase tracking-wide text-[10px]">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((p, i) => {
+                  const dias = diasParaVencer(p.fecha_fin_contrato);
+                  const venceProximo = dias !== null && dias >= 0 && dias <= 30;
+                  const vencido = dias !== null && dias < 0;
+                  return (
+                    <tr key={p.id} className={cn(
+                      "border-b last:border-b-0 hover:bg-background transition-colors",
+                      i % 2 === 0 ? "bg-card" : "bg-background/50"
+                    )}>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
+                            <Building2 className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">{p.nombre}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {p.nit ? `NIT ${p.nit}` : "Sin NIT"}
+                              {p.representante && ` · ${p.representante}`}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-foreground">{p.tipo_servicio || "—"}</td>
+                      <td className="px-4 py-3">
+                        {p.arl ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5">
+                            <ShieldCheck className="w-3 h-3" /> {p.arl}
+                          </span>
+                        ) : <span className="text-muted-foreground/50">—</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {p.fecha_fin_contrato ? (
+                          <div>
+                            <p className={cn("font-medium", vencido ? "text-red-600" : venceProximo ? "text-amber-600" : "text-foreground")}>
+                              {fmt(p.fecha_fin_contrato)}
+                            </p>
+                            {vencido && <p className="text-[10px] text-red-500">Vencido</p>}
+                            {venceProximo && <p className="text-[10px] text-amber-500">Vence en {dias} días</p>}
+                          </div>
+                        ) : <span className="text-muted-foreground/50">—</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-medium", ESTADO_STYLES[p.estado] ?? ESTADO_STYLES.inactivo)}>
+                          {ESTADO_LABEL[p.estado] ?? p.estado}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {puedeEditar && (
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => openEdit(p)} className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => setDeleteId(p.id)} className="p-1.5 rounded-md hover:bg-red-50 transition-colors text-muted-foreground hover:text-red-600">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ── Add / Edit Dialog ── */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing ? "Editar proveedor" : "Nuevo proveedor"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 pt-1">
+
+            {/* Datos básicos */}
+            <div>
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Datos básicos</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <Label className="text-xs mb-1 block">Nombre de la empresa <span className="text-destructive">*</span></Label>
+                  <Input value={form.nombre} onChange={setEv("nombre")} placeholder="Razón social del proveedor" className="h-8 text-xs" />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">NIT</Label>
+                  <Input value={form.nit ?? ""} onChange={setEv("nit")} placeholder="900.123.456-7" className="h-8 text-xs" />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Tipo de servicio</Label>
+                  <Input value={form.tipo_servicio ?? ""} onChange={setEv("tipo_servicio")} placeholder="ej: Mantenimiento, Seguridad, Limpieza…" className="h-8 text-xs" />
+                </div>
+              </div>
+            </div>
+
+            {/* Contacto */}
+            <div>
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Contacto</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs mb-1 block">Representante legal</Label>
+                  <Input value={form.representante ?? ""} onChange={setEv("representante")} placeholder="Nombre completo" className="h-8 text-xs" />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Teléfono</Label>
+                  <Input value={form.telefono ?? ""} onChange={setEv("telefono")} placeholder="3001234567" className="h-8 text-xs" />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Email</Label>
+                  <Input value={form.email ?? ""} onChange={setEv("email")} type="email" placeholder="contacto@empresa.com" className="h-8 text-xs" />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Ciudad</Label>
+                  <Input value={form.ciudad ?? ""} onChange={setEv("ciudad")} placeholder="Bogotá" className="h-8 text-xs" />
+                </div>
+              </div>
+            </div>
+
+            {/* SST y contrato */}
+            <div>
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Contrato y SST</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs mb-1 block">ARL del proveedor</Label>
+                  <Input value={form.arl ?? ""} onChange={setEv("arl")} placeholder="Sura, Colmena, Positiva…" className="h-8 text-xs" />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Estado</Label>
+                  <Select value={form.estado} onValueChange={set("estado")}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="activo">Activo</SelectItem>
+                      <SelectItem value="en_evaluacion">En evaluación</SelectItem>
+                      <SelectItem value="suspendido">Suspendido</SelectItem>
+                      <SelectItem value="inactivo">Inactivo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Inicio de contrato</Label>
+                  <Input type="date" value={form.fecha_inicio_contrato ?? ""} onChange={setEv("fecha_inicio_contrato")} className="h-8 text-xs" />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Fin de contrato</Label>
+                  <Input type="date" value={form.fecha_fin_contrato ?? ""} onChange={setEv("fecha_fin_contrato")} className="h-8 text-xs" />
+                </div>
+              </div>
+            </div>
+
+            {/* Notas */}
+            <div>
+              <Label className="text-xs mb-1 block">Notas</Label>
+              <Textarea value={form.notas ?? ""} onChange={setEv("notas")}
+                placeholder="Observaciones, condiciones especiales, historial…"
+                className="text-xs min-h-[70px] resize-none" />
+            </div>
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+            <Button size="sm" onClick={handleSave} disabled={saving}>
+              {saving ? "Guardando…" : editing ? "Guardar cambios" : "Agregar proveedor"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete confirm ── */}
+      <AlertDialog open={!!deleteId} onOpenChange={v => { if (!v) setDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar proveedor?</AlertDialogTitle>
+            <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </AppLayout>
+  );
+}

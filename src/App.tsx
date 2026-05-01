@@ -25,6 +25,7 @@ import PlanAnual from "./pages/PlanAnual.tsx";
 import MiEmpresa from "./pages/MiEmpresa.tsx";
 import Inspecciones from "./pages/Inspecciones.tsx";
 import Estadisticas from "./pages/Estadisticas.tsx";
+import Proveedores from "./pages/Proveedores.tsx";
 
 const queryClient = new QueryClient();
 
@@ -151,6 +152,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Estadisticas />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/proveedores"
+              element={
+                <ProtectedRoute>
+                  <Proveedores />
                 </ProtectedRoute>
               }
             />
