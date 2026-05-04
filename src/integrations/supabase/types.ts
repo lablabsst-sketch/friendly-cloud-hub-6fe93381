@@ -942,12 +942,14 @@ export type Database = {
           direccion: string | null
           email: string | null
           id: string
+          limite_trabajadores: number | null
           logo_url: string | null
           nit: string | null
           nivel_proteccion: string | null
           nombre: string
           num_empleados_directos: number | null
           num_empleados_indirectos: number | null
+          plan: string | null
           representante_legal: string | null
           responsable_sgsst: string | null
           sector_industria: string | null
@@ -965,12 +967,14 @@ export type Database = {
           direccion?: string | null
           email?: string | null
           id?: string
+          limite_trabajadores?: number | null
           logo_url?: string | null
           nit?: string | null
           nivel_proteccion?: string | null
           nombre: string
           num_empleados_directos?: number | null
           num_empleados_indirectos?: number | null
+          plan?: string | null
           representante_legal?: string | null
           responsable_sgsst?: string | null
           sector_industria?: string | null
@@ -988,12 +992,14 @@ export type Database = {
           direccion?: string | null
           email?: string | null
           id?: string
+          limite_trabajadores?: number | null
           logo_url?: string | null
           nit?: string | null
           nivel_proteccion?: string | null
           nombre?: string
           num_empleados_directos?: number | null
           num_empleados_indirectos?: number | null
+          plan?: string | null
           representante_legal?: string | null
           responsable_sgsst?: string | null
           sector_industria?: string | null
@@ -1218,6 +1224,42 @@ export type Database = {
           responsable_id?: string | null
           tipo?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      invitaciones: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string
+          empresa_id: string
+          estado: string
+          id: string
+          rol: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email: string
+          empresa_id: string
+          estado?: string
+          id?: string
+          rol?: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string
+          empresa_id?: string
+          estado?: string
+          id?: string
+          rol?: string
+          token?: string
         }
         Relationships: []
       }
@@ -1523,10 +1565,12 @@ export type Database = {
           departamento: string | null
           email: string | null
           empresa_id: string
+          empresa_proveedor_id: string | null
           estado: string | null
           fecha_fin_contrato: string | null
           fecha_inicio_contrato: string | null
           id: string
+          invite_token: string | null
           nit: string | null
           nombre: string
           notas: string | null
@@ -1542,10 +1586,12 @@ export type Database = {
           departamento?: string | null
           email?: string | null
           empresa_id: string
+          empresa_proveedor_id?: string | null
           estado?: string | null
           fecha_fin_contrato?: string | null
           fecha_inicio_contrato?: string | null
           id?: string
+          invite_token?: string | null
           nit?: string | null
           nombre: string
           notas?: string | null
@@ -1561,10 +1607,12 @@ export type Database = {
           departamento?: string | null
           email?: string | null
           empresa_id?: string
+          empresa_proveedor_id?: string | null
           estado?: string | null
           fecha_fin_contrato?: string | null
           fecha_inicio_contrato?: string | null
           id?: string
+          invite_token?: string | null
           nit?: string | null
           nombre?: string
           notas?: string | null
@@ -1573,7 +1621,15 @@ export type Database = {
           tipo_servicio?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "proveedores_empresa_proveedor_id_fkey"
+            columns: ["empresa_proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sedes: {
         Row: {
@@ -1612,6 +1668,61 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solicitudes_enlace: {
+        Row: {
+          created_at: string | null
+          empresa_proveedor_id: string
+          empresa_solicitante_id: string
+          estado: string
+          id: string
+          mensaje: string | null
+          proveedor_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          empresa_proveedor_id: string
+          empresa_solicitante_id: string
+          estado?: string
+          id?: string
+          mensaje?: string | null
+          proveedor_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          empresa_proveedor_id?: string
+          empresa_solicitante_id?: string
+          estado?: string
+          id?: string
+          mensaje?: string | null
+          proveedor_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitudes_enlace_empresa_proveedor_id_fkey"
+            columns: ["empresa_proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_enlace_empresa_solicitante_id_fkey"
+            columns: ["empresa_solicitante_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_enlace_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
             referencedColumns: ["id"]
           },
         ]
