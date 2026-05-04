@@ -95,6 +95,11 @@ export default function Proveedores() {
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  // Match state (NIT already registered in platform)
+  const [matchEmpresa, setMatchEmpresa] = useState<{ id: string; nombre: string } | null>(null);
+  const [pendingSaveForm, setPendingSaveForm] = useState<typeof blank | null>(null);
+  const [matchSaving, setMatchSaving] = useState(false);
+
   // Invite state
   const [inviteProveedor, setInviteProveedor] = useState<Proveedor | null>(null);
   const [inviteLink, setInviteLink] = useState("");
@@ -141,39 +146,92 @@ export default function Proveedores() {
     setForm(p => ({ ...p, [k]: e.target.value }));
 
   // ── Save ─────────────────────────────────────────────────────────────────────
+  const buildPayload = (f: FormData) => ({
+    ...f,
+    empresa_id: empresa!.id,
+    nit: f.nit || null,
+    tipo_servicio: f.tipo_servicio || null,
+    representante: f.representante || null,
+    email: f.email || null,
+    telefono: f.telefono || null,
+    ciudad: f.ciudad || null,
+    departamento: f.departamento || null,
+    arl: f.arl || null,
+    fecha_inicio_contrato: f.fecha_inicio_contrato || null,
+    fecha_fin_contrato: f.fecha_fin_contrato || null,
+    notas: f.notas || null,
+  });
+
+  const doInsert = async (payload: ReturnType<typeof buildPayload>, enlaceEmpresaId?: string) => {
+    const { data, error } = await (supabase as any)
+      .from("proveedores").insert(payload).select("id").single();
+    if (error) throw error;
+    if (enlaceEmpresaId && data?.id) {
+      await (supabase as any).from("solicitudes_enlace").insert({
+        empresa_solicitante_id: empresa!.id,
+        empresa_proveedor_id: enlaceEmpresaId,
+        proveedor_id: data.id,
+      });
+    }
+    return data?.id;
+  };
+
   const handleSave = async () => {
     if (!form.nombre.trim()) {
       toast({ title: "El nombre del proveedor es requerido", variant: "destructive" });
       return;
     }
     setSaving(true);
-    const payload = {
-      ...form,
-      empresa_id: empresa!.id,
-      nit: form.nit || null,
-      tipo_servicio: form.tipo_servicio || null,
-      representante: form.representante || null,
-      email: form.email || null,
-      telefono: form.telefono || null,
-      ciudad: form.ciudad || null,
-      departamento: form.departamento || null,
-      arl: form.arl || null,
-      fecha_inicio_contrato: form.fecha_inicio_contrato || null,
-      fecha_fin_contrato: form.fecha_fin_contrato || null,
-      notas: form.notas || null,
-    };
+    try {
+      // On create: check if NIT already has an empresa in the platform
+      if (!editing && form.nit?.trim()) {
+        const { data: existingEmpresa } = await (supabase as any)
+          .from("empresas").select("id, nombre").eq("nit", form.nit.trim()).maybeSingle();
+        if (existingEmpresa) {
+          setMatchEmpresa(existingEmpresa);
+          setPendingSaveForm(form);
+          setSaving(false);
+          return;
+        }
+      }
 
-    const { error } = editing
-      ? await (supabase as any).from("proveedores").update(payload).eq("id", editing.id)
-      : await (supabase as any).from("proveedores").insert(payload);
+      const payload = buildPayload(form);
+      if (editing) {
+        const { error } = await (supabase as any).from("proveedores").update(payload).eq("id", editing.id);
+        if (error) throw error;
+      } else {
+        await doInsert(payload);
+      }
 
-    setSaving(false);
-    if (error) {
-      toast({ title: "Error al guardar", description: error.message, variant: "destructive" });
-    } else {
       toast({ title: editing ? "Proveedor actualizado" : "Proveedor agregado" });
       setDialogOpen(false);
       fetchProveedores();
+    } catch (e: any) {
+      toast({ title: "Error al guardar", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleMatchSave = async (conEnlace: boolean) => {
+    if (!pendingSaveForm || !empresa) return;
+    setMatchSaving(true);
+    try {
+      const payload = buildPayload(pendingSaveForm);
+      await doInsert(payload, conEnlace ? matchEmpresa!.id : undefined);
+      toast({
+        title: conEnlace
+          ? "Proveedor agregado. Solicitud de enlace enviada."
+          : "Proveedor agregado sin enlace.",
+      });
+      setMatchEmpresa(null);
+      setPendingSaveForm(null);
+      setDialogOpen(false);
+      fetchProveedores();
+    } catch (e: any) {
+      toast({ title: "Error al guardar", description: e.message, variant: "destructive" });
+    } finally {
+      setMatchSaving(false);
     }
   };
 
@@ -375,6 +433,13 @@ export default function Proveedores() {
                       <td className="px-4 py-3">
                         {puedeEditar && (
                           <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => { setInviteLink(""); setCopiedInvite(false); generateProvInvite(p); }}
+                              className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-primary"
+                              title="Invitar a plataforma"
+                            >
+                              <UserPlus className="w-3.5 h-3.5" />
+                            </button>
                             <button onClick={() => openEdit(p)} className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
@@ -489,6 +554,94 @@ export default function Proveedores() {
               {saving ? "Guardando…" : editing ? "Guardar cambios" : "Agregar proveedor"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Match dialog (NIT ya registrado) ── */}
+      <Dialog open={!!matchEmpresa} onOpenChange={open => { if (!open) { setMatchEmpresa(null); setPendingSaveForm(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Empresa ya registrada en SSTLink</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-[13px] font-medium text-amber-800">{matchEmpresa?.nombre}</p>
+                <p className="text-[11px] text-amber-700 mt-0.5">
+                  Este NIT ya tiene una empresa registrada en la plataforma. Puedes solicitar un enlace o agregarlo como proveedor sin vincular.
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Button
+                className="w-full"
+                onClick={() => handleMatchSave(true)}
+                disabled={matchSaving}
+              >
+                {matchSaving ? "Guardando…" : "Solicitar enlace a esta empresa"}
+              </Button>
+              <p className="text-[10px] text-muted-foreground text-center">
+                El proveedor recibirá una solicitud y deberá aprobarla para quedar vinculado.
+              </p>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => handleMatchSave(false)}
+                disabled={matchSaving}
+              >
+                Agregar sin enlazar
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full text-muted-foreground"
+                onClick={() => { setMatchEmpresa(null); setPendingSaveForm(null); }}
+                disabled={matchSaving}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Invite dialog ── */}
+      <Dialog open={!!inviteLink} onOpenChange={open => { if (!open) { setInviteLink(""); setInviteProveedor(null); setCopiedInvite(false); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Invitar a {inviteProveedor?.nombre ?? "proveedor"} a SSTLink</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Comparte este enlace con el proveedor para que cree su cuenta en SSTLink. Al registrarse, quedará vinculado automáticamente como proveedor tuyo.
+            </p>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-[10px] text-muted-foreground mb-1">Enlace de invitación</p>
+              <p className="text-[11px] font-mono break-all">{inviteLink}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button className="flex-1" variant="outline" onClick={copyInviteLink}>
+                {copiedInvite
+                  ? <><Check className="w-3.5 h-3.5 mr-1.5 text-green-600" /> Copiado</>
+                  : <><Copy className="w-3.5 h-3.5 mr-1.5" /> Copiar enlace</>
+                }
+              </Button>
+              {inviteProveedor?.email && (
+                <Button variant="outline" className="flex-1" asChild>
+                  <a
+                    href={`mailto:${inviteProveedor.email}?subject=Invitación a SSTLink&body=${encodeURIComponent(`Hola ${inviteProveedor.nombre},\n\nTe invitamos a unirte a SSTLink para gestionar tu documentación SST.\n\nEnlace de registro: ${inviteLink}\n\nSaludos.`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Mail className="w-3.5 h-3.5 mr-1.5" /> Enviar correo
+                  </a>
+                </Button>
+              )}
+            </div>
+            <DialogFooter>
+              <Button onClick={() => { setInviteLink(""); setInviteProveedor(null); setCopiedInvite(false); }}>Listo</Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

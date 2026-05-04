@@ -24,7 +24,7 @@ import {
   Building2, Pencil, Save, X, Upload, Users, ShieldCheck,
   Phone, Mail, MapPin, Hash, Briefcase, AlertTriangle, UserCheck,
   FileText, Plus, Trash2, ExternalLink, Clock, CheckCircle2,
-  UserPlus, Copy, Check,
+  UserPlus, Copy, Check, Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { canAdmin } from "@/lib/roles";
@@ -66,6 +66,14 @@ interface Invitacion {
   rol: string;
   token: string;
   estado: string;
+  created_at: string;
+}
+
+interface SolicitudEnlace {
+  id: string;
+  empresa_solicitante_id: string;
+  empresa_solicitante: { nombre: string } | null;
+  proveedor_id: string | null;
   created_at: string;
 }
 
@@ -151,6 +159,9 @@ export default function MiEmpresa() {
   const [generatedLink, setGeneratedLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+
+  // Solicitudes de enlace
+  const [solicitudes, setSolicitudes] = useState<SolicitudEnlace[]>([]);
 
   // ── Fetch docs ───────────────────────────────────────────────────────────
 
@@ -338,6 +349,36 @@ export default function MiEmpresa() {
     navigator.clipboard.writeText(generatedLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // ── Solicitudes de enlace ─────────────────────────────────────────────────
+
+  const fetchSolicitudes = useCallback(async () => {
+    if (!authEmpresa?.id) return;
+    const { data } = await (supabase as any)
+      .from("solicitudes_enlace")
+      .select("id, empresa_solicitante_id, empresa_solicitante:empresa_solicitante_id(nombre), proveedor_id, created_at")
+      .eq("empresa_proveedor_id", authEmpresa.id)
+      .eq("estado", "pendiente")
+      .order("created_at", { ascending: false });
+    setSolicitudes(data ?? []);
+  }, [authEmpresa?.id]);
+
+  useEffect(() => { if (canAdmin(usuario?.rol)) fetchSolicitudes(); }, [fetchSolicitudes, usuario?.rol]);
+
+  const handleAprobarSolicitud = async (sol: SolicitudEnlace) => {
+    await (supabase as any).from("solicitudes_enlace").update({ estado: "aprobada" }).eq("id", sol.id);
+    if (sol.proveedor_id) {
+      await (supabase as any).from("proveedores").update({ empresa_proveedor_id: authEmpresa!.id }).eq("id", sol.proveedor_id);
+    }
+    setSolicitudes(prev => prev.filter(s => s.id !== sol.id));
+    toast({ title: "Solicitud aprobada. Proveedor vinculado." });
+  };
+
+  const handleRechazarSolicitud = async (solId: string) => {
+    await (supabase as any).from("solicitudes_enlace").update({ estado: "rechazada" }).eq("id", solId);
+    setSolicitudes(prev => prev.filter(s => s.id !== solId));
+    toast({ title: "Solicitud rechazada" });
   };
 
   // ── Logo upload ───────────────────────────────────────────────────────────
@@ -787,6 +828,42 @@ export default function MiEmpresa() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Solicitudes de enlace ── */}
+        {canAdmin(usuario?.rol) && solicitudes.length > 0 && (
+          <div className="bg-surface rounded-xl border-[0.5px] border-amber-200 p-4">
+            <h3 className="text-[13px] font-medium flex items-center gap-2 mb-2">
+              <Link2 className="w-4 h-4 text-amber-500" /> Solicitudes de enlace
+              <span className="ml-1 bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">{solicitudes.length}</span>
+            </h3>
+            <p className="text-[11px] text-muted-foreground mb-3">
+              Estas empresas en SSTLink quieren vincularte como proveedor. Aprueba para quedar conectados.
+            </p>
+            <div className="divide-y">
+              {solicitudes.map(sol => (
+                <div key={sol.id} className="flex items-center gap-3 py-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                    <Building2 className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium truncate">{sol.empresa_solicitante?.nombre ?? "Empresa desconocida"}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {new Date(sol.created_at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Button size="sm" className="h-7 text-xs" onClick={() => handleAprobarSolicitud(sol)}>
+                      <Check className="w-3.5 h-3.5 mr-1" /> Aprobar
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleRechazarSolicitud(sol.id)}>
+                      <X className="w-3.5 h-3.5 mr-1" /> Rechazar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
