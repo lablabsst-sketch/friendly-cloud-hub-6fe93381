@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from "@/components/ui/dialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -21,6 +21,7 @@ import { canEdit } from "@/lib/roles";
 import {
   Plus, Search, Truck, Pencil, Trash2, AlertTriangle,
   Phone, Mail, Building2, ShieldCheck, CalendarClock,
+  UserPlus, Copy, Check, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -93,6 +94,12 @@ export default function Proveedores() {
   const [form, setForm] = useState<FormData>(blank);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Invite state
+  const [inviteProveedor, setInviteProveedor] = useState<Proveedor | null>(null);
+  const [inviteLink, setInviteLink] = useState("");
+  const [generatingInvite, setGeneratingInvite] = useState(false);
+  const [copiedInvite, setCopiedInvite] = useState(false);
 
   // ── Fetch ────────────────────────────────────────────────────────────────────
   const fetchProveedores = useCallback(async () => {
@@ -177,6 +184,37 @@ export default function Proveedores() {
     if (error) toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
     else { toast({ title: "Proveedor eliminado" }); fetchProveedores(); }
     setDeleteId(null);
+  };
+
+  // ── Invite ───────────────────────────────────────────────────────────────────
+  const generateProvInvite = async (prov: Proveedor) => {
+    if (!prov.email && !prov.nit) {
+      toast({ title: "El proveedor necesita email o NIT para invitar", variant: "destructive" });
+      return;
+    }
+    setGeneratingInvite(true);
+    try {
+      // Generate a random token
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(24)))
+        .map(b => b.toString(16).padStart(2, "0")).join("");
+      const { error } = await (supabase as any)
+        .from("proveedores")
+        .update({ invite_token: token })
+        .eq("id", prov.id);
+      if (error) throw error;
+      setInviteLink(`${window.location.origin}/register?prov=${token}`);
+      setInviteProveedor(prov);
+    } catch {
+      toast({ title: "Error al generar invitación", variant: "destructive" });
+    } finally {
+      setGeneratingInvite(false);
+    }
+  };
+
+  const copyInviteLink = () => {
+    navigator.clipboard.writeText(inviteLink);
+    setCopiedInvite(true);
+    setTimeout(() => setCopiedInvite(false), 2000);
   };
 
   // ── Stats ────────────────────────────────────────────────────────────────────

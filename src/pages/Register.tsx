@@ -42,7 +42,31 @@ export default function Register() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
 
-  // Invite mode
+  // Proveedor invite mode
+  const provToken = searchParams.get("prov");
+  const [provData, setProvData] = useState<{ nombre: string; nit: string | null; email: string | null; empresa_cliente_id: string } | null>(null);
+  const [provTokenValid, setProvTokenValid] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!provToken) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("proveedores")
+        .select("nombre, nit, email, empresa_id")
+        .eq("invite_token", provToken)
+        .single();
+      if (data) {
+        setProvData({ nombre: data.nombre, nit: data.nit, email: data.email, empresa_cliente_id: data.empresa_id });
+        setNombre(data.nombre ?? "");
+        setNit(data.nit ?? "");
+        setProvTokenValid(true);
+      } else {
+        setProvTokenValid(false);
+      }
+    })();
+  }, [provToken]);
+
+  // Team invite mode
   const invToken = searchParams.get("inv");
   const [invEmpresaNombre, setInvEmpresaNombre] = useState<string | null>(null);
   const [invRol, setInvRol] = useState<string | null>(null);
@@ -109,8 +133,16 @@ export default function Register() {
     return true;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!validateStep()) return;
+    if (step === 0 && nit.trim()) {
+      const { data: existing } = await (supabase as any)
+        .from("empresas").select("id, nombre").eq("nit", nit.trim()).maybeSingle();
+      if (existing) {
+        setErrors({ nit: `Este NIT ya está registrado en SSTLink (${existing.nombre}). Si eres proveedor invitado, usa el enlace que te enviaron.` });
+        return;
+      }
+    }
     if (step < 3) setStep(step + 1);
   };
 
@@ -250,6 +282,123 @@ export default function Register() {
       setLoading(false);
     }
   };
+
+  // ── Proveedor invite: invalid token ───────────────────────────────────────
+  if (provToken && provTokenValid === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="bg-card rounded-xl border-[0.5px] border-border p-8">
+            <p className="text-sm text-destructive font-medium mb-4">Este enlace de invitación no es válido o ya fue usado.</p>
+            <Button variant="outline" onClick={() => navigate("/login")}>Ir al inicio de sesión</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Proveedor invite: registration ─────────────────────────────────────────
+  if (provToken && provTokenValid === true) {
+    const handleFinishProv = async () => {
+      const r = step2Schema.safeParse({ fullName, email, password });
+      if (!r.success) {
+        const fe: Record<string, string> = {};
+        r.error.errors.forEach(e => { if (e.path[0]) fe[e.path[0] as string] = e.message; });
+        setErrors(fe);
+        return;
+      }
+      setErrors({});
+      setLoading(true);
+      try {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email, password,
+          options: { data: { nombre: fullName, empresa_nombre: provData!.nombre, empresa_nit: provData!.nit ?? "" } },
+        });
+        if (authError) throw authError;
+        const authUserId = authData.user?.id;
+        if (!authUserId) throw new Error("No se pudo crear la sesión.");
+
+        const { data: empresaCreada, error: empErr } = await supabase
+          .from("empresas")
+          .insert({ nombre: provData!.nombre, nit: provData!.nit })
+          .select("id").single();
+        if (empErr || !empresaCreada) throw empErr ?? new Error("No se pudo crear la empresa.");
+
+        await (supabase as any).from("empresas").update({ plan: "free", limite_trabajadores: 11 }).eq("id", empresaCreada.id);
+
+        const [firstName, ...rest] = fullName.trim().split(" ").filter(Boolean);
+        await supabase.from("usuarios").insert({
+          user_id: authUserId, auth_user_id: authUserId,
+          empresa_id: empresaCreada.id,
+          nombre: firstName || fullName.trim(),
+          apellido: rest.join(" ") || null,
+          nombre_completo: fullName.trim(),
+          email: email.trim().toLowerCase(),
+          rol: "administrador",
+        });
+        await supabase.from("user_roles").insert({ user_id: authUserId, role: "administrador" });
+        await (supabase as any).from("proveedores")
+          .update({ empresa_proveedor_id: empresaCreada.id, invite_token: null })
+          .eq("invite_token", provToken);
+
+        setSuccess(true);
+      } catch (err: any) {
+        toast({ title: "Error en el registro", description: err.message, variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+        <div className="w-full max-w-sm">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <img src={logoSstlink} alt="SSTLink" className="h-10 w-auto" />
+          </div>
+          {success ? (
+            <div className="bg-card rounded-xl border-[0.5px] border-border p-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-8 h-8 text-secondary" />
+              </div>
+              <h1 className="text-lg font-medium mb-2">¡Cuenta creada!</h1>
+              <p className="text-sm text-muted-foreground mb-6">Tu empresa quedó registrada. Revisa tu correo para confirmar tu cuenta.</p>
+              <Button onClick={() => navigate("/login")} className="w-full">Ir al inicio de sesión</Button>
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl border-[0.5px] border-border p-6 space-y-5">
+              <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg">
+                <ShieldCheck className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-[13px] font-medium">Registro como proveedor</p>
+                  <p className="text-[12px] text-muted-foreground">{provData?.nombre}</p>
+                  {provData?.nit && <p className="text-[11px] text-muted-foreground">NIT: {provData.nit}</p>}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Tu nombre completo</Label>
+                <Input placeholder="Nombre del administrador" value={fullName} onChange={e => setFullName(e.target.value)} />
+                {errors.fullName && <p className="text-xs text-destructive">{errors.fullName}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Correo electrónico</Label>
+                <Input type="email" placeholder="tu@empresa.com" value={email} onChange={e => setEmail(e.target.value)} />
+                {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Contraseña</Label>
+                <Input type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} />
+                {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+              </div>
+              <p className="text-[10px] text-muted-foreground">Obtendrás un plan gratuito con acceso limitado. Tu empresa quedará vinculada automáticamente como proveedor.</p>
+              <Button onClick={handleFinishProv} disabled={loading} className="w-full">
+                {loading ? "Creando cuenta…" : "Crear mi cuenta"}
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // ── Invite mode: invalid token ─────────────────────────────────────────────
   if (invToken && invValid === false) {

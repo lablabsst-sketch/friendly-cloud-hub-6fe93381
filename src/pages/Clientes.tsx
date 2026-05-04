@@ -3,7 +3,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Plus, Users, Settings, Power } from "lucide-react";
+import { Plus, Users, Settings, Power, Share2, Copy, Check, Mail } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +32,8 @@ export default function Clientes() {
   const [addOpen, setAddOpen] = useState(false);
   const [editData, setEditData] = useState<Cliente | null>(null);
   const [assignModal, setAssignModal] = useState<{ id: string; nombre: string } | null>(null);
+  const [shareCliente, setShareCliente] = useState<Cliente | null>(null);
+  const [copiedPortal, setCopiedPortal] = useState(false);
 
   const fetchClientes = async () => {
     if (!empresa?.id) return;
@@ -60,6 +63,14 @@ export default function Clientes() {
   };
 
   useEffect(() => { fetchClientes(); }, [empresa?.id]);
+
+  const copyPortalMessage = (c: Cliente) => {
+    const url = `${window.location.origin}/portal`;
+    const msg = `Hola ${c.nombre},\n\nTe compartimos acceso al portal de SSTLink para consultar documentos y trabajadores asignados.\n\nEnlace: ${url}\nTu NIT/Cédula de acceso: ${c.nit_cedula}\n\nSaludos.`;
+    navigator.clipboard.writeText(msg);
+    setCopiedPortal(true);
+    setTimeout(() => setCopiedPortal(false), 2000);
+  };
 
   const toggleActivo = async (cliente: Cliente) => {
     const { error } = await supabase
@@ -126,7 +137,11 @@ export default function Clientes() {
                 <div className="flex gap-2 pt-1">
                   <Button variant="outline" size="sm" className="text-xs flex-1"
                     onClick={() => setAssignModal({ id: c.id, nombre: c.nombre })}>
-                    <Settings className="w-3.5 h-3.5 mr-1" /> Gestionar trabajadores
+                    <Settings className="w-3.5 h-3.5 mr-1" /> Trabajadores
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-xs"
+                    onClick={() => { setShareCliente(c); setCopiedPortal(false); }}>
+                    <Share2 className="w-3.5 h-3.5" />
                   </Button>
                   <Button variant="ghost" size="sm" className="text-xs"
                     onClick={() => toggleActivo(c)}>
@@ -155,6 +170,64 @@ export default function Clientes() {
           onSaved={fetchClientes}
         />
       )}
+
+      {/* Share portal dialog */}
+      <Dialog open={!!shareCliente} onOpenChange={open => !open && setShareCliente(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Compartir acceso al portal</DialogTitle>
+          </DialogHeader>
+          {shareCliente && (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                Envía este acceso a <strong>{shareCliente.nombre}</strong> para que consulte sus documentos y trabajadores asignados.
+              </p>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground mb-0.5">Enlace del portal</p>
+                    <p className="text-[12px] font-mono">{window.location.origin}/portal</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground mb-0.5">NIT / Cédula de acceso</p>
+                    <p className="text-[13px] font-semibold">{shareCliente.nit_cedula}</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-muted-foreground">El cliente ingresa con su NIT o cédula directamente en el portal, sin contraseña.</p>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => copyPortalMessage(shareCliente)}
+                >
+                  {copiedPortal
+                    ? <><Check className="w-3.5 h-3.5 mr-1.5 text-green-600" /> Copiado</>
+                    : <><Copy className="w-3.5 h-3.5 mr-1.5" /> Copiar mensaje</>
+                  }
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  asChild
+                >
+                  <a
+                    href={`mailto:${shareCliente.email ?? ""}?subject=Acceso al portal SSTLink&body=${encodeURIComponent(`Hola ${shareCliente.nombre},%0A%0ATe compartimos acceso al portal de SSTLink para consultar documentos y trabajadores asignados.%0A%0AEnlace: ${window.location.origin}/portal%0ATu NIT/Cédula de acceso: ${shareCliente.nit_cedula}%0A%0ASaludos.`)}`}
+                    target="_blank"
+                  >
+                    <Mail className="w-3.5 h-3.5 mr-1.5" /> Enviar correo
+                  </a>
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

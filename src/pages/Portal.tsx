@@ -156,6 +156,49 @@ export default function Portal() {
           </div>
         ) : (
           <>
+            {/* Empresa info card */}
+            {!selectedWorker && (
+              <div className="bg-surface border-[0.5px] border-border rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Shield className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold">{data.cliente.empresa_nombre}</h2>
+                    <p className="text-[12px] text-muted-foreground">Portal verificado · SSTLink</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Company documents section */}
+            {data.documentos_empresa.length > 0 && (
+              <section>
+                <h2 className="text-lg font-bold text-foreground mb-3">Documentos de la empresa</h2>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {data.documentos_empresa.map(doc => (
+                    <Card key={doc.id} className="p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{doc.nombre}</p>
+                          {doc.fecha_vencimiento && <p className="text-xs text-muted-foreground">Vence: {doc.fecha_vencimiento}</p>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant={estadoColor(doc.estado)} className="text-[10px]">{doc.estado}</Badge>
+                        {doc.url && (
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                            <Download className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                          </a>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Workers section */}
             <section>
               <h2 className="text-lg font-bold text-foreground mb-3">Trabajadores asignados</h2>
@@ -190,34 +233,6 @@ export default function Portal() {
                 </div>
               )}
             </section>
-
-            {/* Company documents section */}
-            {data.documentos_empresa.length > 0 && (
-              <section>
-                <h2 className="text-lg font-bold text-foreground mb-3">Documentos de la empresa</h2>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {data.documentos_empresa.map(doc => (
-                    <Card key={doc.id} className="p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{doc.nombre}</p>
-                          {doc.fecha_vencimiento && <p className="text-xs text-muted-foreground">Vence: {doc.fecha_vencimiento}</p>}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant={estadoColor(doc.estado)} className="text-[10px]">{doc.estado}</Badge>
-                        {doc.url && (
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                            <Download className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                          </a>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </section>
-            )}
           </>
         )}
       </main>
