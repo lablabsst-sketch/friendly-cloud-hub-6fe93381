@@ -21,7 +21,7 @@ import { canEdit } from "@/lib/roles";
 import {
   Plus, Search, Truck, Pencil, Trash2, AlertTriangle,
   Phone, Mail, Building2, ShieldCheck, CalendarClock,
-  UserPlus, Copy, Check, ExternalLink,
+  UserPlus, Copy, Check, ExternalLink, Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,7 @@ interface Proveedor {
   fecha_fin_contrato: string | null;
   estado: string;
   notas: string | null;
+  empresa_proveedor_id: string | null;
   created_at: string;
 }
 
@@ -183,11 +184,12 @@ export default function Proveedores() {
     }
     setSaving(true);
     try {
-      // On create: check if NIT already has an empresa in the platform
+      // On create: check if NIT already has an empresa in the platform (normalized comparison)
       if (!editing && form.nit?.trim()) {
-        const { data: existingEmpresa } = await (supabase as any)
-          .from("empresas").select("id, nombre").eq("nit", form.nit.trim()).maybeSingle();
-        if (existingEmpresa) {
+        const { data: matches } = await (supabase as any)
+          .rpc("find_empresa_by_nit", { p_nit: form.nit.trim() });
+        const existingEmpresa = matches?.[0] ?? null;
+        if (existingEmpresa && existingEmpresa.id !== empresa!.id) {
           setMatchEmpresa(existingEmpresa);
           setPendingSaveForm(form);
           setSaving(false);
@@ -273,6 +275,44 @@ export default function Proveedores() {
     navigator.clipboard.writeText(inviteLink);
     setCopiedInvite(true);
     setTimeout(() => setCopiedInvite(false), 2000);
+  };
+
+  // ── Buscar enlace manual (para proveedores ya existentes) ─────────────────────
+  const handleBuscarEnlace = async (prov: Proveedor) => {
+    if (!prov.nit?.trim() || !empresa) return;
+    try {
+      const { data: matches } = await (supabase as any)
+        .rpc("find_empresa_by_nit", { p_nit: prov.nit.trim() });
+      const found = matches?.[0] ?? null;
+
+      if (!found || found.id === empresa.id) {
+        toast({ title: "No se encontró empresa con ese NIT en SSTLink" });
+        return;
+      }
+
+      // Verificar si ya existe solicitud pendiente
+      const { data: existing } = await (supabase as any)
+        .from("solicitudes_enlace")
+        .select("id, estado")
+        .eq("empresa_solicitante_id", empresa.id)
+        .eq("empresa_proveedor_id", found.id)
+        .maybeSingle();
+
+      if (existing) {
+        toast({ title: `Ya existe una solicitud ${existing.estado} para este proveedor` });
+        return;
+      }
+
+      await (supabase as any).from("solicitudes_enlace").insert({
+        empresa_solicitante_id: empresa.id,
+        empresa_proveedor_id: found.id,
+        proveedor_id: prov.id,
+      });
+
+      toast({ title: "Solicitud de enlace enviada", description: `A ${found.nombre}` });
+    } catch (e: any) {
+      toast({ title: "Error al buscar enlace", description: e.message, variant: "destructive" });
+    }
   };
 
   // ── Stats ────────────────────────────────────────────────────────────────────
@@ -433,6 +473,20 @@ export default function Proveedores() {
                       <td className="px-4 py-3">
                         {puedeEditar && (
                           <div className="flex items-center justify-end gap-1">
+                            {p.nit && !p.empresa_proveedor_id && (
+                              <button
+                                onClick={() => handleBuscarEnlace(p)}
+                                className="p-1.5 rounded-md hover:bg-amber-50 transition-colors text-muted-foreground hover:text-amber-600"
+                                title="Buscar enlace en plataforma"
+                              >
+                                <Link2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {p.empresa_proveedor_id && (
+                              <span className="p-1.5 text-emerald-500" title="Empresa vinculada en SSTLink">
+                                <Link2 className="w-3.5 h-3.5" />
+                              </span>
+                            )}
                             <button
                               onClick={() => { setInviteLink(""); setCopiedInvite(false); generateProvInvite(p); }}
                               className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-primary"
