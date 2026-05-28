@@ -137,7 +137,7 @@ export default function Proveedores() {
       representante: p.representante ?? "", email: p.email ?? "", telefono: p.telefono ?? "",
       ciudad: p.ciudad ?? "", departamento: p.departamento ?? "", arl: p.arl ?? "",
       fecha_inicio_contrato: p.fecha_inicio_contrato ?? "", fecha_fin_contrato: p.fecha_fin_contrato ?? "",
-      estado: p.estado, notas: p.notas ?? "",
+      estado: p.estado, notas: p.notas ?? "", empresa_proveedor_id: p.empresa_proveedor_id ?? null,
     });
     setDialogOpen(true);
   };
