@@ -2131,6 +2131,13 @@ export type Database = {
         Returns: boolean
       }
       can_create_empresa: { Args: { _user_id: string }; Returns: boolean }
+      find_empresa_by_nit: {
+        Args: { p_nit: string }
+        Returns: {
+          id: string
+          nombre: string
+        }[]
+      }
       get_cumplimiento_phva: { Args: { p_empresa_id: string }; Returns: Json }
       get_portal_cliente:
         | { Args: { p_empresa_id: string; p_nit: string }; Returns: Json }
@@ -2143,6 +2150,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      normalize_nit: { Args: { p_nit: string }; Returns: string }
     }
     Enums: {
       app_role: "administrador" | "asistente" | "lector" | "super_admin"
