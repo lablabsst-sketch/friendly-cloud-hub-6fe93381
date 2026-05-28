@@ -52,7 +52,7 @@ const blank: FormData = {
   nombre: "", nit: "", tipo_servicio: "", representante: "",
   email: "", telefono: "", ciudad: "", departamento: "",
   arl: "", fecha_inicio_contrato: "", fecha_fin_contrato: "",
-  estado: "activo", notas: "",
+  estado: "activo", notas: "", empresa_proveedor_id: null,
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
