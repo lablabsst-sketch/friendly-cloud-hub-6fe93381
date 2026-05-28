@@ -141,18 +141,28 @@ export function AddWorkerModal({ open, onOpenChange, empresaId, onSuccess, editW
     }
     setLoading(true);
     try {
-      if (!isEdit || form.numero_documento.trim() !== editWorker?.numero_documento) {
-        const { data: existing } = await supabase
+      const docChanged = !isEdit
+        || form.numero_documento.trim() !== editWorker?.numero_documento
+        || form.tipo_documento !== editWorker?.tipo_documento;
+      if (docChanged) {
+        const { data: existing } = await (supabase as any)
           .from("trabajadores").select("id")
           .eq("empresa_id", resolvedEmpresaId)
+          .eq("tipo_documento", form.tipo_documento)
           .eq("numero_documento", form.numero_documento.trim())
+          .eq("eliminado", false)
           .maybeSingle();
-        if (existing) {
-          toast({ title: "Ya existe un trabajador con ese documento.", variant: "destructive" });
+        if (existing && existing.id !== editWorker?.id) {
+          toast({
+            title: "Ya existe un trabajador con esta cédula en tu empresa",
+            description: `${form.tipo_documento} ${form.numero_documento.trim()} ya está registrado.`,
+            variant: "destructive",
+          });
           setLoading(false);
           return;
         }
       }
+
 
       const payload = {
         nombres: form.nombres.trim(),
