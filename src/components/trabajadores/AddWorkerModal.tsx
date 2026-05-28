@@ -197,13 +197,20 @@ export function AddWorkerModal({ open, onOpenChange, empresaId, onSuccess, editW
 
       if (isEdit) {
         const { data, error } = await supabase.from("trabajadores").update(payload).eq("id", editWorker!.id).select().single();
-        if (error) { toast({ title: "Error al actualizar", description: error.message, variant: "destructive" }); }
+        if (error) {
+          const isUnique = (error as any).code === "23505";
+          toast({ title: isUnique ? "Ya existe un trabajador con esta cédula en tu empresa" : "Error al actualizar", description: isUnique ? undefined : error.message, variant: "destructive" });
+        }
         else { toast({ title: "Trabajador actualizado correctamente." }); onOpenChange(false); onSuccess(data); }
       } else {
         const { data, error } = await supabase.from("trabajadores").insert({ ...payload, empresa_id: resolvedEmpresaId, estado: "pendiente" }).select().single();
-        if (error) { toast({ title: "Error al guardar", description: error.message, variant: "destructive" }); }
+        if (error) {
+          const isUnique = (error as any).code === "23505";
+          toast({ title: isUnique ? "Ya existe un trabajador con esta cédula en tu empresa" : "Error al guardar", description: isUnique ? undefined : error.message, variant: "destructive" });
+        }
         else { toast({ title: `${form.nombres.trim()} agregado correctamente.` }); onOpenChange(false); setForm(emptyForm); onSuccess(data); }
       }
+
     } catch (err: any) {
       toast({ title: "Error inesperado", description: err?.message, variant: "destructive" });
     }
