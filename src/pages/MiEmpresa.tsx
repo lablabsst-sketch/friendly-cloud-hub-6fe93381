@@ -210,11 +210,28 @@ export default function MiEmpresa() {
   const save = async () => {
     if (!empresa) return;
     setSaving(true);
+    const nitTrim = form.nit?.trim() || null;
+
+    if (nitTrim) {
+      const { data: existing } = await (supabase as any)
+        .rpc("find_empresa_by_nit", { p_nit: nitTrim });
+      const match = Array.isArray(existing) ? existing[0] : existing;
+      if (match && match.id !== empresa.id) {
+        toast({
+          title: "Ya existe una empresa registrada con este NIT",
+          description: `Coincide con: ${match.nombre}`,
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
+    }
+
     const { error } = await (supabase as any)
       .from("empresas")
       .update({
         nombre: form.nombre,
-        nit: form.nit || null,
+        nit: nitTrim,
         direccion: form.direccion || null,
         ciudad: form.ciudad || null,
         departamento: form.departamento || null,
@@ -233,9 +250,14 @@ export default function MiEmpresa() {
       })
       .eq("id", empresa.id);
     if (error) {
-      toast({ title: "Error al guardar", variant: "destructive" });
+      const isUnique = (error as any).code === "23505" || /unique|duplicad|nit/i.test(error.message ?? "");
+      toast({
+        title: isUnique ? "Ya existe una empresa registrada con este NIT" : "Error al guardar",
+        description: isUnique ? "Verifica el NIT e intenta de nuevo." : error.message,
+        variant: "destructive",
+      });
     } else {
-      setEmpresa(prev => prev ? { ...prev, ...form } as EmpresaFull : prev);
+      setEmpresa(prev => prev ? { ...prev, ...form, nit: nitTrim } as EmpresaFull : prev);
       setEditing(false);
       toast({ title: "Información actualizada" });
     }
