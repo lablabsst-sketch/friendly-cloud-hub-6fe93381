@@ -137,9 +137,10 @@ export default function Register() {
     if (!validateStep()) return;
     if (step === 0 && nit.trim()) {
       const { data: existing } = await (supabase as any)
-        .from("empresas").select("id, nombre").eq("nit", nit.trim()).maybeSingle();
-      if (existing) {
-        setErrors({ nit: `Este NIT ya está registrado en SSTLink (${existing.nombre}). Si eres proveedor invitado, usa el enlace que te enviaron.` });
+        .rpc("find_empresa_by_nit", { p_nit: nit.trim() });
+      const match = Array.isArray(existing) ? existing[0] : existing;
+      if (match) {
+        setErrors({ nit: `Ya existe una empresa registrada con este NIT (${match.nombre}). Si eres proveedor invitado, usa el enlace que te enviaron.` });
         return;
       }
     }
