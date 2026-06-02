@@ -2123,6 +2123,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_solicitud_enlace: {
+        Args: { p_solicitud_id: string }
+        Returns: undefined
+      }
       can_assign_initial_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
