@@ -72,8 +72,9 @@ interface Invitacion {
 interface SolicitudEnlace {
   id: string;
   empresa_solicitante_id: string;
-  empresa_solicitante: { nombre: string } | null;
+  empresa_solicitante: { nombre: string; nit: string | null } | null;
   proveedor_id: string | null;
+  estado: string;
   created_at: string;
 }
 
