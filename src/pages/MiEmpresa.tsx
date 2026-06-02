@@ -379,7 +379,7 @@ export default function MiEmpresa() {
     if (!authEmpresa?.id) return;
     const { data } = await (supabase as any)
       .from("solicitudes_enlace")
-      .select("id, empresa_solicitante_id, empresa_solicitante:empresa_solicitante_id(nombre), proveedor_id, created_at")
+      .select("id, empresa_solicitante_id, empresa_solicitante:empresa_solicitante_id(nombre, nit), proveedor_id, created_at")
       .eq("empresa_proveedor_id", authEmpresa.id)
       .eq("estado", "pendiente")
       .order("created_at", { ascending: false });
@@ -389,9 +389,10 @@ export default function MiEmpresa() {
   useEffect(() => { if (canAdmin(usuario?.rol)) fetchSolicitudes(); }, [fetchSolicitudes, usuario?.rol]);
 
   const handleAprobarSolicitud = async (sol: SolicitudEnlace) => {
-    await (supabase as any).from("solicitudes_enlace").update({ estado: "aprobada" }).eq("id", sol.id);
-    if (sol.proveedor_id) {
-      await (supabase as any).from("proveedores").update({ empresa_proveedor_id: authEmpresa!.id }).eq("id", sol.proveedor_id);
+    const { error } = await (supabase as any).rpc("accept_solicitud_enlace", { p_solicitud_id: sol.id });
+    if (error) {
+      toast({ title: "Error al aprobar solicitud", description: error.message, variant: "destructive" });
+      return;
     }
     setSolicitudes(prev => prev.filter(s => s.id !== sol.id));
     toast({ title: "Solicitud aprobada. Proveedor vinculado." });
