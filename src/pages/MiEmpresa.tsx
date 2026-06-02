@@ -380,7 +380,7 @@ export default function MiEmpresa() {
     if (!authEmpresa?.id) return;
     const { data } = await (supabase as any)
       .from("solicitudes_enlace")
-      .select("id, empresa_solicitante_id, empresa_solicitante:empresa_solicitante_id(nombre, nit), proveedor_id, estado, created_at")
+      .select("id, empresa_solicitante_id, empresa_solicitante:empresa_solicitante_id(nombre, nit), proveedor_id, created_at")
       .eq("empresa_proveedor_id", authEmpresa.id)
       .order("created_at", { ascending: false });
     setSolicitudes(data ?? []);
@@ -391,11 +391,11 @@ export default function MiEmpresa() {
   const handleAprobarSolicitud = async (sol: SolicitudEnlace) => {
     const { error } = await (supabase as any).rpc("accept_solicitud_enlace", { p_solicitud_id: sol.id });
     if (error) {
-      toast({ title: "Error al aceptar", description: error.message, variant: "destructive" });
+      toast({ title: "Error al aprobar solicitud", description: error.message, variant: "destructive" });
       return;
     }
-    await fetchSolicitudes();
-    toast({ title: "Solicitud aceptada", description: "Quedaron vinculados como proveedor." });
+    setSolicitudes(prev => prev.filter(s => s.id !== sol.id));
+    toast({ title: "Solicitud aprobada. Proveedor vinculado." });
   };
 
   const handleRechazarSolicitud = async (solId: string) => {
