@@ -391,11 +391,11 @@ export default function MiEmpresa() {
   const handleAprobarSolicitud = async (sol: SolicitudEnlace) => {
     const { error } = await (supabase as any).rpc("accept_solicitud_enlace", { p_solicitud_id: sol.id });
     if (error) {
-      toast({ title: "Error al aceptar", description: error.message, variant: "destructive" });
+      toast({ title: "Error al aprobar solicitud", description: error.message, variant: "destructive" });
       return;
     }
-    await fetchSolicitudes();
-    toast({ title: "Solicitud aceptada", description: "Quedaron vinculados como proveedor." });
+    setSolicitudes(prev => prev.filter(s => s.id !== sol.id));
+    toast({ title: "Solicitud aprobada. Proveedor vinculado." });
   };
 
   const handleRechazarSolicitud = async (solId: string) => {
