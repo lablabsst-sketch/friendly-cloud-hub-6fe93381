@@ -72,8 +72,9 @@ interface Invitacion {
 interface SolicitudEnlace {
   id: string;
   empresa_solicitante_id: string;
-  empresa_solicitante: { nombre: string } | null;
+  empresa_solicitante: { nombre: string; nit: string | null } | null;
   proveedor_id: string | null;
+  estado: string;
   created_at: string;
 }
 
@@ -381,7 +382,6 @@ export default function MiEmpresa() {
       .from("solicitudes_enlace")
       .select("id, empresa_solicitante_id, empresa_solicitante:empresa_solicitante_id(nombre, nit), proveedor_id, created_at")
       .eq("empresa_proveedor_id", authEmpresa.id)
-      .eq("estado", "pendiente")
       .order("created_at", { ascending: false });
     setSolicitudes(data ?? []);
   }, [authEmpresa?.id]);
@@ -399,8 +399,12 @@ export default function MiEmpresa() {
   };
 
   const handleRechazarSolicitud = async (solId: string) => {
-    await (supabase as any).from("solicitudes_enlace").update({ estado: "rechazada" }).eq("id", solId);
-    setSolicitudes(prev => prev.filter(s => s.id !== solId));
+    const { error } = await (supabase as any).from("solicitudes_enlace").update({ estado: "rechazada" }).eq("id", solId);
+    if (error) {
+      toast({ title: "Error al rechazar", description: error.message, variant: "destructive" });
+      return;
+    }
+    await fetchSolicitudes();
     toast({ title: "Solicitud rechazada" });
   };
 
@@ -854,39 +858,64 @@ export default function MiEmpresa() {
           </div>
         )}
 
-        {/* ── Solicitudes de enlace ── */}
-        {canAdmin(usuario?.rol) && solicitudes.length > 0 && (
-          <div className="bg-surface rounded-xl border-[0.5px] border-amber-200 p-4">
-            <h3 className="text-[13px] font-medium flex items-center gap-2 mb-2">
-              <Link2 className="w-4 h-4 text-amber-500" /> Solicitudes de enlace
-              <span className="ml-1 bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">{solicitudes.length}</span>
+        {/* ── Solicitudes de enlace recibidas ── */}
+        {canAdmin(usuario?.rol) && (
+          <div className="bg-surface rounded-xl border-[0.5px] border-border p-4">
+            <h3 className="text-[13px] font-medium flex items-center gap-2 mb-1">
+              <Link2 className="w-4 h-4 text-amber-500" /> Solicitudes de enlace recibidas
+              {solicitudes.filter(s => s.estado === "pendiente").length > 0 && (
+                <span className="ml-1 bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                  {solicitudes.filter(s => s.estado === "pendiente").length}
+                </span>
+              )}
             </h3>
             <p className="text-[11px] text-muted-foreground mb-3">
-              Estas empresas en SSTLink quieren vincularte como proveedor. Aprueba para quedar conectados.
+              Empresas en SSTLink que solicitan vincularte como su proveedor.
             </p>
-            <div className="divide-y">
-              {solicitudes.map(sol => (
-                <div key={sol.id} className="flex items-center gap-3 py-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
-                    <Building2 className="w-4 h-4 text-amber-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium truncate">{sol.empresa_solicitante?.nombre ?? "Empresa desconocida"}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {new Date(sol.created_at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Button size="sm" className="h-7 text-xs" onClick={() => handleAprobarSolicitud(sol)}>
-                      <Check className="w-3.5 h-3.5 mr-1" /> Aprobar
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleRechazarSolicitud(sol.id)}>
-                      <X className="w-3.5 h-3.5 mr-1" /> Rechazar
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {solicitudes.length === 0 ? (
+              <div className="text-center py-8 text-[12px] text-muted-foreground">
+                No tienes solicitudes de enlace pendientes
+              </div>
+            ) : (
+              <div className="divide-y">
+                {solicitudes.map(sol => {
+                  const estado = sol.estado;
+                  const badgeCls =
+                    estado === "pendiente" ? "bg-amber-100 text-amber-700 border-amber-200" :
+                    estado === "aceptada" || estado === "aprobada" ? "bg-green-100 text-green-700 border-green-200" :
+                    "bg-red-100 text-red-700 border-red-200";
+                  const estadoLabel =
+                    estado === "pendiente" ? "Pendiente" :
+                    estado === "aceptada" || estado === "aprobada" ? "Aceptada" : "Rechazada";
+                  return (
+                    <div key={sol.id} className="flex items-center gap-3 py-3">
+                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Building2 className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-medium truncate">{sol.empresa_solicitante?.nombre ?? "Empresa desconocida"}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          NIT: {sol.empresa_solicitante?.nit ?? "—"} · {new Date(sol.created_at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+                        </p>
+                      </div>
+                      <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full border-[0.5px]", badgeCls)}>
+                        {estadoLabel}
+                      </span>
+                      {estado === "pendiente" && (
+                        <div className="flex items-center gap-1.5 ml-2">
+                          <Button size="sm" className="h-7 text-xs" onClick={() => handleAprobarSolicitud(sol)}>
+                            <Check className="w-3.5 h-3.5 mr-1" /> Aceptar
+                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleRechazarSolicitud(sol.id)}>
+                            <X className="w-3.5 h-3.5 mr-1" /> Rechazar
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
