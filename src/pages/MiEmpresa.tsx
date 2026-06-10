@@ -380,7 +380,7 @@ export default function MiEmpresa() {
     if (!authEmpresa?.id) return;
     const { data } = await (supabase as any)
       .from("solicitudes_enlace")
-      .select("id, empresa_solicitante_id, empresa_solicitante:empresa_solicitante_id(nombre, nit), proveedor_id, created_at")
+      .select("id, empresa_solicitante_id, empresa_solicitante:empresa_solicitante_id(nombre, nit), proveedor_id, estado, created_at")
       .eq("empresa_proveedor_id", authEmpresa.id)
       .order("created_at", { ascending: false });
     setSolicitudes(data ?? []);
