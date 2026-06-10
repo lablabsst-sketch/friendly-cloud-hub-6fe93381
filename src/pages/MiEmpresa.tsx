@@ -394,7 +394,7 @@ export default function MiEmpresa() {
       toast({ title: "Error al aprobar solicitud", description: error.message, variant: "destructive" });
       return;
     }
-    setSolicitudes(prev => prev.filter(s => s.id !== sol.id));
+    await fetchSolicitudes();
     toast({ title: "Solicitud aprobada. Proveedor vinculado." });
   };
 
