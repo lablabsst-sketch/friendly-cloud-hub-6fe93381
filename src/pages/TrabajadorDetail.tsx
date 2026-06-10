@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Pencil, User, Briefcase, Heart, FileText, BarChart2, Lock } from "lucide-react";
+import { ArrowLeft, Pencil, User, Briefcase, Heart, FileText, BarChart2, Lock, GraduationCap, Stethoscope, Printer } from "lucide-react";
 import { AddWorkerModal } from "@/components/trabajadores/AddWorkerModal";
 import { DocumentosTrabajador } from "@/components/trabajadores/DocumentosTrabajador";
 import { PerfilSocioModal, type PerfilSocio } from "@/components/trabajadores/PerfilSocioModal";
@@ -63,6 +63,8 @@ export default function TrabajadorDetail() {
   const { empresa, usuario } = useAuth();
   const [worker, setWorker] = useState<any>(null);
   const [perfil, setPerfil] = useState<Partial<PerfilSocio>>({});
+  const [capacitaciones, setCapacitaciones] = useState<any[]>([]);
+  const [examenes, setExamenes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [perfilOpen, setPerfilOpen] = useState(false);
@@ -75,11 +77,27 @@ export default function TrabajadorDetail() {
       .from("trabajadores")
       .select("*")
       .eq("id", id)
-      .eq("empresa_id", empresa.id)  // Defensa en profundidad — RLS ya filtra, pero validamos también en cliente
+      .eq("empresa_id", empresa.id)
       .maybeSingle();
     if (!data) { setLoading(false); return; }
     setWorker(data);
     setPerfil((data?.perfil_sociodemografico as Partial<PerfilSocio>) ?? {});
+
+    // Capacitaciones (vía asistencia_capacitacion) y exámenes
+    const [{ data: asis }, { data: exs }] = await Promise.all([
+      (supabase as any)
+        .from("asistencia_capacitacion")
+        .select("id, asistio, firmado_en, capacitacion:capacitaciones(id, titulo, fecha, modalidad, duracion_horas, estado)")
+        .eq("trabajador_id", id)
+        .order("firmado_en", { ascending: false, nullsFirst: false }),
+      (supabase as any)
+        .from("examenes_medicos")
+        .select("id, tipo, fecha, resultado, proximo_control, soporte_url")
+        .eq("trabajador_id", id)
+        .order("fecha", { ascending: false }),
+    ]);
+    setCapacitaciones(asis ?? []);
+    setExamenes(exs ?? []);
     setLoading(false);
   };
 
@@ -153,20 +171,27 @@ export default function TrabajadorDetail() {
               </div>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} className="text-xs h-8 gap-1.5 shrink-0">
-            <Pencil className="w-3.5 h-3.5" /> Editar
-          </Button>
+          <div className="flex gap-2 shrink-0 print:hidden">
+            <Button variant="outline" size="sm" onClick={() => window.print()} className="text-xs h-8 gap-1.5">
+              <Printer className="w-3.5 h-3.5" /> Imprimir
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} className="text-xs h-8 gap-1.5">
+              <Pencil className="w-3.5 h-3.5" /> Editar
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className={`grid h-8 w-full ${canSeePerfil ? "grid-cols-5" : "grid-cols-4"}`}>
-            <TabsTrigger value="personal"      className="text-[11px] gap-1"><User      className="w-3 h-3" />Personal</TabsTrigger>
-            <TabsTrigger value="laboral"       className="text-[11px] gap-1"><Briefcase className="w-3 h-3" />Laboral</TabsTrigger>
-            <TabsTrigger value="afiliaciones"  className="text-[11px] gap-1"><Heart     className="w-3 h-3" />Afiliaciones</TabsTrigger>
-            <TabsTrigger value="documentos"    className="text-[11px] gap-1"><FileText  className="w-3 h-3" />Documentos</TabsTrigger>
+          <TabsList className={`grid h-8 w-full print:hidden ${canSeePerfil ? "grid-cols-7" : "grid-cols-6"}`}>
+            <TabsTrigger value="personal"      className="text-[11px] gap-1"><User       className="w-3 h-3" />Personal</TabsTrigger>
+            <TabsTrigger value="laboral"       className="text-[11px] gap-1"><Briefcase  className="w-3 h-3" />Laboral</TabsTrigger>
+            <TabsTrigger value="afiliaciones"  className="text-[11px] gap-1"><Heart      className="w-3 h-3" />Afiliaciones</TabsTrigger>
+            <TabsTrigger value="documentos"    className="text-[11px] gap-1"><FileText   className="w-3 h-3" />Documentos</TabsTrigger>
+            <TabsTrigger value="capacitaciones" className="text-[11px] gap-1"><GraduationCap className="w-3 h-3" />Capacit.</TabsTrigger>
+            <TabsTrigger value="examenes"      className="text-[11px] gap-1"><Stethoscope className="w-3 h-3" />Exámenes</TabsTrigger>
             {canSeePerfil && (
-              <TabsTrigger value="perfil"      className="text-[11px] gap-1"><BarChart2 className="w-3 h-3" />Perfil S.</TabsTrigger>
+              <TabsTrigger value="perfil"      className="text-[11px] gap-1"><BarChart2  className="w-3 h-3" />Perfil S.</TabsTrigger>
             )}
           </TabsList>
 
@@ -282,6 +307,67 @@ export default function TrabajadorDetail() {
               <DocumentosTrabajador trabajadorId={worker.id} trabajadorNombre={fullName} />
             </div>
           </TabsContent>
+
+          {/* TAB — CAPACITACIONES */}
+          <TabsContent value="capacitaciones" className="mt-4">
+            <div className="rounded-lg border bg-card p-4">
+              <p className="text-sm font-semibold mb-3">Historial de capacitaciones</p>
+              {capacitaciones.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Sin capacitaciones asignadas.</p>
+              ) : (
+                <div className="divide-y">
+                  {capacitaciones.map((a: any) => (
+                    <div key={a.id} className="py-2.5 flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{a.capacitacion?.titulo ?? "—"}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {a.capacitacion?.fecha ? fmt(a.capacitacion.fecha) : "—"}
+                          {a.capacitacion?.modalidad ? ` · ${a.capacitacion.modalidad}` : ""}
+                          {a.capacitacion?.duracion_horas ? ` · ${a.capacitacion.duracion_horas}h` : ""}
+                        </p>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium shrink-0 ${a.firmado_en || a.asistio ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-amber-100 text-amber-700 border-amber-200"}`}>
+                        {a.firmado_en || a.asistio ? "Asistió" : "Pendiente"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* TAB — EXÁMENES MÉDICOS */}
+          <TabsContent value="examenes" className="mt-4">
+            <div className="rounded-lg border bg-card p-4">
+              <p className="text-sm font-semibold mb-3">Exámenes médicos</p>
+              {examenes.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Sin exámenes registrados.</p>
+              ) : (
+                <div className="divide-y">
+                  {examenes.map((e: any) => (
+                    <div key={e.id} className="py-2.5 flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground capitalize">{e.tipo}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {fmt(e.fecha)}
+                          {e.proximo_control ? ` · Próx. control: ${fmt(e.proximo_control)}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-slate-100 text-slate-700 border-slate-200 capitalize">
+                          {(e.resultado ?? "pendiente").replace(/_/g, " ")}
+                        </span>
+                        {e.soporte_url && (
+                          <a href={e.soporte_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline">Ver</a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
 
           {/* TAB 5 — PERFIL SOCIODEMOGRÁFICO (solo admin/asistente) */}
           {canSeePerfil && (

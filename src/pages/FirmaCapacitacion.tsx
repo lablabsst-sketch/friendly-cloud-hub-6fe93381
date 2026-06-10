@@ -150,8 +150,11 @@ export default function FirmaCapacitacion() {
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("firmas").getPublicUrl(filename);
-      const publicUrl = urlData?.publicUrl;
+      // Signed URL (bucket is private). 10 years = effectively permanent for our use.
+      const { data: urlData } = await supabase.storage
+        .from("firmas")
+        .createSignedUrl(filename, 60 * 60 * 24 * 365 * 10);
+      const publicUrl = urlData?.signedUrl;
 
       const { error: updateError } = await (supabase as any)
         .from("asistencia_capacitacion")

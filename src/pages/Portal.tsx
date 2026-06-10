@@ -128,6 +128,11 @@ export default function Portal() {
             <h2 className="text-lg font-bold">{selectedWorker.nombres} {selectedWorker.apellidos}</h2>
             <p className="text-sm text-muted-foreground">{selectedWorker.cargo} · {selectedWorker.tipo_documento} {selectedWorker.numero_documento}</p>
 
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 flex items-start justify-between gap-3">
+              <p>¿Te falta algún documento? Para subirlo, ingresa a SSTLink con tu cuenta de proveedor.</p>
+              <a href="/login" className="shrink-0 underline font-medium">Ingresar</a>
+            </div>
+
             {selectedWorker.documentos.length === 0 ? (
               <p className="text-muted-foreground text-sm py-4">No hay documentos disponibles.</p>
             ) : (

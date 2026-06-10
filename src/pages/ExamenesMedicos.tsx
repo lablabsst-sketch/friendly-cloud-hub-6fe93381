@@ -24,7 +24,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Stethoscope, Plus, Pencil, Trash2, CheckCircle2, XCircle, Clock,
+  Stethoscope, Plus, Pencil, Trash2, CheckCircle2, XCircle, Clock, Paperclip, Upload,
 } from "lucide-react";
 
 interface Trabajador { id: string; nombres: string; apellidos: string; cargo: string | null; }
@@ -78,6 +78,7 @@ const emptyForm = {
   concepto: "",
   proximo_control: "",
   restricciones: "",
+  soporte_url: "" as string | null | "",
 };
 
 export default function ExamenesMedicos() {
@@ -95,7 +96,29 @@ export default function ExamenesMedicos() {
   const [editing, setEditing] = useState<ExamenMedico | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleUploadSoporte = async (file: File) => {
+    if (!empresa?.id) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "Archivo muy grande", description: "Máximo 10 MB.", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop() ?? "bin";
+    const path = `${empresa.id}/examenes/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("documentos").upload(path, file, { upsert: false, contentType: file.type });
+    if (error) {
+      toast({ title: "Error al subir archivo", description: error.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const { data } = await supabase.storage.from("documentos").createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+    setForm((f) => ({ ...f, soporte_url: data?.signedUrl ?? "" }));
+    setUploading(false);
+    toast({ title: "Archivo cargado" });
+  };
 
   const workerMap = new Map(trabajadores.map((t) => [t.id, `${t.nombres} ${t.apellidos}`]));
 
@@ -142,6 +165,7 @@ export default function ExamenesMedicos() {
       concepto: e.concepto ?? "",
       proximo_control: e.proximo_control ?? "",
       restricciones: e.restricciones ?? "",
+      soporte_url: e.soporte_url ?? "",
     });
     setDialogOpen(true);
   };
@@ -158,6 +182,7 @@ export default function ExamenesMedicos() {
       concepto: form.concepto || null,
       proximo_control: form.proximo_control || null,
       restricciones: form.resultado === "apto_con_restricciones" ? (form.restricciones || null) : null,
+      soporte_url: form.soporte_url || null,
     };
     if (editing) {
       const { error } = await (supabase as any).from("examenes_medicos").update(payload).eq("id", editing.id);
@@ -287,6 +312,11 @@ export default function ExamenesMedicos() {
                         <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">{e.concepto ?? "—"}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
+                            {e.soporte_url && (
+                              <a href={e.soporte_url} target="_blank" rel="noopener noreferrer" className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent text-muted-foreground hover:text-primary" title="Ver soporte">
+                                <Paperclip className="h-3.5 w-3.5" />
+                              </a>
+                            )}
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(e)}><Pencil className="h-3.5 w-3.5" /></Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(e.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                           </div>
@@ -352,6 +382,28 @@ export default function ExamenesMedicos() {
             <div className="space-y-1.5">
               <Label>Concepto / Observaciones</Label>
               <Textarea value={form.concepto} onChange={(e) => setForm({ ...form, concepto: e.target.value })} rows={3} placeholder="Concepto del médico, observaciones…" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Soporte / Certificado (PDF o imagen, máx. 10 MB)</Label>
+              {form.soporte_url ? (
+                <div className="flex items-center gap-2 text-xs">
+                  <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                  <a href={form.soporte_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate flex-1">Ver archivo cargado</a>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setForm({ ...form, soporte_url: "" })}>Quitar</Button>
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground hover:bg-accent">
+                  {uploading ? <Clock className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  <span>{uploading ? "Subiendo…" : "Seleccionar archivo"}</span>
+                  <input
+                    type="file"
+                    accept="application/pdf,image/*"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadSoporte(f); e.target.value = ""; }}
+                  />
+                </label>
+              )}
             </div>
           </div>
           <DialogFooter>
