@@ -138,6 +138,33 @@ export default function Trabajadores() {
     URL.revokeObjectURL(url);
   };
 
+  const handleOpenAddModal = async () => {
+    if (!empresa?.id) return;
+    const { data: emp } = await (supabase as any)
+      .from("empresas")
+      .select("plan, limite_trabajadores")
+      .eq("id", empresa.id)
+      .maybeSingle();
+    const plan = emp?.plan ?? "free";
+    const limite = emp?.limite_trabajadores ?? 11;
+    if (plan === "free") {
+      const { count } = await (supabase as any)
+        .from("trabajadores")
+        .select("id", { count: "exact", head: true })
+        .eq("empresa_id", empresa.id)
+        .eq("eliminado", false);
+      if ((count ?? 0) >= limite) {
+        toast({
+          title: "Límite del plan alcanzado",
+          description: "Alcanzaste el límite de tu plan. Actualiza a Pro para agregar más trabajadores.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    setShowModal(true);
+  };
+
   useEffect(() => {
     if (empresa?.id) fetchWorkers();
   }, [empresa?.id, fetchWorkers]);
@@ -201,7 +228,7 @@ export default function Trabajadores() {
               <Upload className="w-3.5 h-3.5" aria-hidden="true" />
               Importar CSV
             </Button>
-            <Button onClick={() => setShowModal(true)} className="gap-1.5 text-xs h-9">
+            <Button onClick={handleOpenAddModal} className="gap-1.5 text-xs h-9">
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               Añadir Trabajador
             </Button>
@@ -256,7 +283,7 @@ export default function Trabajadores() {
             </div>
             <p className="text-sm font-medium text-foreground mb-1">Aún no tienes trabajadores registrados</p>
             <p className="text-xs text-muted-foreground mb-4">Comienza agregando tu primer trabajador al sistema.</p>
-            <Button onClick={() => setShowModal(true)} className="gap-1.5 text-xs h-9">
+            <Button onClick={handleOpenAddModal} className="gap-1.5 text-xs h-9">
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               Agregar el primer trabajador
             </Button>
