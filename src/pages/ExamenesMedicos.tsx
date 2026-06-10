@@ -24,7 +24,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Stethoscope, Plus, Pencil, Trash2, CheckCircle2, XCircle, Clock,
+  Stethoscope, Plus, Pencil, Trash2, CheckCircle2, XCircle, Clock, Paperclip, Upload,
 } from "lucide-react";
 
 interface Trabajador { id: string; nombres: string; apellidos: string; cargo: string | null; }
