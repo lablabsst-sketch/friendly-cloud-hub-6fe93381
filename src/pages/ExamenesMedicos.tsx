@@ -388,7 +388,7 @@ export default function ExamenesMedicos() {
                 </div>
               ) : (
                 <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground hover:bg-accent">
-                  {uploading ? <Loader2Icon /> : <Upload className="h-3.5 w-3.5" />}
+                  {uploading ? <Clock className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                   <span>{uploading ? "Subiendo…" : "Seleccionar archivo"}</span>
                   <input
                     type="file"
