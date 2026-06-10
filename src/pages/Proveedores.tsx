@@ -21,8 +21,9 @@ import { canEdit } from "@/lib/roles";
 import {
   Plus, Search, Truck, Pencil, Trash2, AlertTriangle,
   Phone, Mail, Building2, ShieldCheck, CalendarClock,
-  UserPlus, Copy, Check, ExternalLink, Link2,
+  UserPlus, Copy, Check, ExternalLink, Link2, Plug, CheckCircle2,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
