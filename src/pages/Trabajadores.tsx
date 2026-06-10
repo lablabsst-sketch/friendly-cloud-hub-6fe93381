@@ -283,7 +283,7 @@ export default function Trabajadores() {
             </div>
             <p className="text-sm font-medium text-foreground mb-1">Aún no tienes trabajadores registrados</p>
             <p className="text-xs text-muted-foreground mb-4">Comienza agregando tu primer trabajador al sistema.</p>
-            <Button onClick={() => setShowModal(true)} className="gap-1.5 text-xs h-9">
+            <Button onClick={handleOpenAddModal} className="gap-1.5 text-xs h-9">
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               Agregar el primer trabajador
             </Button>
