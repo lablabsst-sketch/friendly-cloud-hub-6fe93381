@@ -378,6 +378,28 @@ export default function ExamenesMedicos() {
               <Label>Concepto / Observaciones</Label>
               <Textarea value={form.concepto} onChange={(e) => setForm({ ...form, concepto: e.target.value })} rows={3} placeholder="Concepto del médico, observaciones…" />
             </div>
+            <div className="space-y-1.5">
+              <Label>Soporte / Certificado (PDF o imagen, máx. 10 MB)</Label>
+              {form.soporte_url ? (
+                <div className="flex items-center gap-2 text-xs">
+                  <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                  <a href={form.soporte_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate flex-1">Ver archivo cargado</a>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setForm({ ...form, soporte_url: "" })}>Quitar</Button>
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 cursor-pointer rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground hover:bg-accent">
+                  {uploading ? <Loader2Icon /> : <Upload className="h-3.5 w-3.5" />}
+                  <span>{uploading ? "Subiendo…" : "Seleccionar archivo"}</span>
+                  <input
+                    type="file"
+                    accept="application/pdf,image/*"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadSoporte(f); e.target.value = ""; }}
+                  />
+                </label>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <DialogClose asChild><Button variant="outline" size="sm">Cancelar</Button></DialogClose>
