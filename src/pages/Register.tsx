@@ -370,6 +370,20 @@ export default function Register() {
           .update({ empresa_proveedor_id: empresaCreada.id, invite_token: null })
           .eq("invite_token", provToken);
 
+        try {
+          const { count } = await (supabase as any)
+            .from("solicitudes_enlace")
+            .select("id", { count: "exact", head: true })
+            .eq("empresa_proveedor_id", empresaCreada.id)
+            .eq("estado", "pendiente");
+          if ((count ?? 0) > 0) {
+            toast({
+              title: "Solicitudes de enlace pendientes",
+              description: "Tu empresa ya tiene solicitudes de enlace pendientes. Revísalas en Mi Empresa.",
+            });
+          }
+        } catch { /* no-op */ }
+
         setSuccess(true);
       } catch (err: any) {
         const { title, description } = describeAuthError(err);
