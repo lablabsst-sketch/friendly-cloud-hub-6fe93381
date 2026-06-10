@@ -11,6 +11,8 @@ import { useLocation } from "react-router-dom";
 import { useEffect, useRef, useState, KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import logoSstlink from "@/assets/logo-sstlink.png";
 
 const STORAGE_KEY = "sstlink:sidebar:expanded";
@@ -20,6 +22,7 @@ type NavItem = {
   url: string;
   icon: typeof LayoutDashboard;
   badge?: boolean;
+  badgeCount?: number;
   color?: string;
 };
 
@@ -80,6 +83,26 @@ const bottomItems: NavItem[] = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { empresa } = useAuth();
+  const [pendingEnlaces, setPendingEnlaces] = useState(0);
+
+  useEffect(() => {
+    if (!empresa?.id) { setPendingEnlaces(0); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { count } = await (supabase as any)
+          .from("solicitudes_enlace")
+          .select("id", { count: "exact", head: true })
+          .eq("empresa_proveedor_id", empresa.id)
+          .eq("estado", "pendiente");
+        if (!cancelled) setPendingEnlaces(count ?? 0);
+      } catch {
+        if (!cancelled) setPendingEnlaces(0);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [empresa?.id]);
 
   // Categoría activa por ruta — para abrirla por defecto
   const activeCategoryId = categories.find((c) =>
@@ -189,7 +212,21 @@ export function AppSidebar() {
         {expanded && (
           <span className="text-[13px] truncate">{item.title}</span>
         )}
-        {item.badge && (
+        {item.badgeCount && item.badgeCount > 0 ? (
+          <>
+            <span
+              className={cn(
+                "absolute min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground",
+                "text-[9px] font-medium flex items-center justify-center leading-none",
+                expanded ? "top-1.5 right-2" : "-top-0.5 -right-0.5"
+              )}
+              aria-hidden="true"
+            >
+              {item.badgeCount > 99 ? "99+" : item.badgeCount}
+            </span>
+            <span className="sr-only">({item.badgeCount} pendientes)</span>
+          </>
+        ) : item.badge && (
           <>
             <span
               className={cn(
@@ -384,7 +421,9 @@ export function AppSidebar() {
           expanded ? "items-stretch" : "items-center"
         )}
       >
-        {bottomItems.map(renderItem)}
+        {bottomItems.map((it) =>
+          renderItem(it.url === "/empresa" ? { ...it, badgeCount: pendingEnlaces } : it)
+        )}
       </nav>
     </aside>
   );
