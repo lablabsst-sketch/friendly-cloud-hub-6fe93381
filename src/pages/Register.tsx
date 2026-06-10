@@ -357,7 +357,8 @@ export default function Register() {
 
         setSuccess(true);
       } catch (err: any) {
-        toast({ title: "Error en el registro", description: err.message, variant: "destructive" });
+        const { title, description } = describeAuthError(err);
+        toast({ title, description, variant: "destructive" });
       } finally {
         setLoading(false);
       }
