@@ -212,7 +212,21 @@ export function AppSidebar() {
         {expanded && (
           <span className="text-[13px] truncate">{item.title}</span>
         )}
-        {item.badge && (
+        {item.badgeCount && item.badgeCount > 0 ? (
+          <>
+            <span
+              className={cn(
+                "absolute min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground",
+                "text-[9px] font-medium flex items-center justify-center leading-none",
+                expanded ? "top-1.5 right-2" : "-top-0.5 -right-0.5"
+              )}
+              aria-hidden="true"
+            >
+              {item.badgeCount > 99 ? "99+" : item.badgeCount}
+            </span>
+            <span className="sr-only">({item.badgeCount} pendientes)</span>
+          </>
+        ) : item.badge && (
           <>
             <span
               className={cn(
