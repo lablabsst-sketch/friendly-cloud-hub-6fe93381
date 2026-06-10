@@ -96,7 +96,29 @@ export default function ExamenesMedicos() {
   const [editing, setEditing] = useState<ExamenMedico | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleUploadSoporte = async (file: File) => {
+    if (!empresa?.id) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "Archivo muy grande", description: "Máximo 10 MB.", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop() ?? "bin";
+    const path = `${empresa.id}/examenes/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("documentos").upload(path, file, { upsert: false, contentType: file.type });
+    if (error) {
+      toast({ title: "Error al subir archivo", description: error.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const { data } = await supabase.storage.from("documentos").createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+    setForm((f) => ({ ...f, soporte_url: data?.signedUrl ?? "" }));
+    setUploading(false);
+    toast({ title: "Archivo cargado" });
+  };
 
   const workerMap = new Map(trabajadores.map((t) => [t.id, `${t.nombres} ${t.apellidos}`]));
 
