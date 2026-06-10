@@ -171,20 +171,27 @@ export default function TrabajadorDetail() {
               </div>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} className="text-xs h-8 gap-1.5 shrink-0">
-            <Pencil className="w-3.5 h-3.5" /> Editar
-          </Button>
+          <div className="flex gap-2 shrink-0 print:hidden">
+            <Button variant="outline" size="sm" onClick={() => window.print()} className="text-xs h-8 gap-1.5">
+              <Printer className="w-3.5 h-3.5" /> Imprimir
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} className="text-xs h-8 gap-1.5">
+              <Pencil className="w-3.5 h-3.5" /> Editar
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className={`grid h-8 w-full ${canSeePerfil ? "grid-cols-5" : "grid-cols-4"}`}>
-            <TabsTrigger value="personal"      className="text-[11px] gap-1"><User      className="w-3 h-3" />Personal</TabsTrigger>
-            <TabsTrigger value="laboral"       className="text-[11px] gap-1"><Briefcase className="w-3 h-3" />Laboral</TabsTrigger>
-            <TabsTrigger value="afiliaciones"  className="text-[11px] gap-1"><Heart     className="w-3 h-3" />Afiliaciones</TabsTrigger>
-            <TabsTrigger value="documentos"    className="text-[11px] gap-1"><FileText  className="w-3 h-3" />Documentos</TabsTrigger>
+          <TabsList className={`grid h-8 w-full print:hidden ${canSeePerfil ? "grid-cols-7" : "grid-cols-6"}`}>
+            <TabsTrigger value="personal"      className="text-[11px] gap-1"><User       className="w-3 h-3" />Personal</TabsTrigger>
+            <TabsTrigger value="laboral"       className="text-[11px] gap-1"><Briefcase  className="w-3 h-3" />Laboral</TabsTrigger>
+            <TabsTrigger value="afiliaciones"  className="text-[11px] gap-1"><Heart      className="w-3 h-3" />Afiliaciones</TabsTrigger>
+            <TabsTrigger value="documentos"    className="text-[11px] gap-1"><FileText   className="w-3 h-3" />Documentos</TabsTrigger>
+            <TabsTrigger value="capacitaciones" className="text-[11px] gap-1"><GraduationCap className="w-3 h-3" />Capacit.</TabsTrigger>
+            <TabsTrigger value="examenes"      className="text-[11px] gap-1"><Stethoscope className="w-3 h-3" />Exámenes</TabsTrigger>
             {canSeePerfil && (
-              <TabsTrigger value="perfil"      className="text-[11px] gap-1"><BarChart2 className="w-3 h-3" />Perfil S.</TabsTrigger>
+              <TabsTrigger value="perfil"      className="text-[11px] gap-1"><BarChart2  className="w-3 h-3" />Perfil S.</TabsTrigger>
             )}
           </TabsList>
 
