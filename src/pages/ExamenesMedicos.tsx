@@ -160,6 +160,7 @@ export default function ExamenesMedicos() {
       concepto: form.concepto || null,
       proximo_control: form.proximo_control || null,
       restricciones: form.resultado === "apto_con_restricciones" ? (form.restricciones || null) : null,
+      soporte_url: form.soporte_url || null,
     };
     if (editing) {
       const { error } = await (supabase as any).from("examenes_medicos").update(payload).eq("id", editing.id);
