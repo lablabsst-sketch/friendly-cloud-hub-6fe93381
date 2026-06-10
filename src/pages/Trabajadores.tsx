@@ -138,6 +138,33 @@ export default function Trabajadores() {
     URL.revokeObjectURL(url);
   };
 
+  const handleOpenAddModal = async () => {
+    if (!empresa?.id) return;
+    const { data: emp } = await (supabase as any)
+      .from("empresas")
+      .select("plan, limite_trabajadores")
+      .eq("id", empresa.id)
+      .maybeSingle();
+    const plan = emp?.plan ?? "free";
+    const limite = emp?.limite_trabajadores ?? 11;
+    if (plan === "free") {
+      const { count } = await (supabase as any)
+        .from("trabajadores")
+        .select("id", { count: "exact", head: true })
+        .eq("empresa_id", empresa.id)
+        .eq("eliminado", false);
+      if ((count ?? 0) >= limite) {
+        toast({
+          title: "Límite del plan alcanzado",
+          description: "Alcanzaste el límite de tu plan. Actualiza a Pro para agregar más trabajadores.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    setShowModal(true);
+  };
+
   useEffect(() => {
     if (empresa?.id) fetchWorkers();
   }, [empresa?.id, fetchWorkers]);
