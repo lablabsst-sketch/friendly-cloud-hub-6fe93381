@@ -228,7 +228,7 @@ export default function Trabajadores() {
               <Upload className="w-3.5 h-3.5" aria-hidden="true" />
               Importar CSV
             </Button>
-            <Button onClick={() => setShowModal(true)} className="gap-1.5 text-xs h-9">
+            <Button onClick={handleOpenAddModal} className="gap-1.5 text-xs h-9">
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               Añadir Trabajador
             </Button>
