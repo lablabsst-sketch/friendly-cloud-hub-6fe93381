@@ -22,6 +22,7 @@ type NavItem = {
   url: string;
   icon: typeof LayoutDashboard;
   badge?: boolean;
+  badgeCount?: number;
   color?: string;
 };
 
