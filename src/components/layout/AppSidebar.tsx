@@ -83,6 +83,26 @@ const bottomItems: NavItem[] = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { empresa } = useAuth();
+  const [pendingEnlaces, setPendingEnlaces] = useState(0);
+
+  useEffect(() => {
+    if (!empresa?.id) { setPendingEnlaces(0); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { count } = await (supabase as any)
+          .from("solicitudes_enlace")
+          .select("id", { count: "exact", head: true })
+          .eq("empresa_proveedor_id", empresa.id)
+          .eq("estado", "pendiente");
+        if (!cancelled) setPendingEnlaces(count ?? 0);
+      } catch {
+        if (!cancelled) setPendingEnlaces(0);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [empresa?.id]);
 
   // Categoría activa por ruta — para abrirla por defecto
   const activeCategoryId = categories.find((c) =>
