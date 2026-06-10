@@ -474,7 +474,7 @@ export default function Proveedores() {
                       <td className="px-4 py-3">
                         {puedeEditar && (
                           <div className="flex items-center justify-end gap-1">
-                            {p.nit && !p.empresa_proveedor_id && (
+                            {!!p.nit?.trim() && !p.empresa_proveedor_id && (
                               <TooltipProvider delayDuration={200}>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
