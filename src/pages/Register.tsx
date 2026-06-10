@@ -33,6 +33,21 @@ const step3Schema = z.object({
   tieneContratistas: z.boolean(),
 });
 
+function describeAuthError(err: any): { title: string; description: string } {
+  const msg = String(err?.message ?? "");
+  const code = String(err?.code ?? "");
+  if (
+    code === "user_already_exists" ||
+    /user already registered|already registered|already exists/i.test(msg)
+  ) {
+    return {
+      title: "Correo ya registrado",
+      description: "Este correo ya tiene una cuenta. Inicia sesión o usa otro correo.",
+    };
+  }
+  return { title: "Error en el registro", description: msg || "No se pudo completar el registro." };
+}
+
 export default function Register() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
