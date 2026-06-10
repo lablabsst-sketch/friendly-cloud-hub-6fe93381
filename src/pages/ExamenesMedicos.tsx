@@ -312,6 +312,11 @@ export default function ExamenesMedicos() {
                         <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">{e.concepto ?? "—"}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
+                            {e.soporte_url && (
+                              <a href={e.soporte_url} target="_blank" rel="noopener noreferrer" className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent text-muted-foreground hover:text-primary" title="Ver soporte">
+                                <Paperclip className="h-3.5 w-3.5" />
+                              </a>
+                            )}
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(e)}><Pencil className="h-3.5 w-3.5" /></Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(e.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                           </div>
