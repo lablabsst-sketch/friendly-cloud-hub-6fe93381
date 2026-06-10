@@ -143,6 +143,7 @@ export default function ExamenesMedicos() {
       concepto: e.concepto ?? "",
       proximo_control: e.proximo_control ?? "",
       restricciones: e.restricciones ?? "",
+      soporte_url: e.soporte_url ?? "",
     });
     setDialogOpen(true);
   };
