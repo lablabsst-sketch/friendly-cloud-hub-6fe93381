@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Pencil, User, Briefcase, Heart, FileText, BarChart2, Lock } from "lucide-react";
+import { ArrowLeft, Pencil, User, Briefcase, Heart, FileText, BarChart2, Lock, GraduationCap, Stethoscope, Printer } from "lucide-react";
 import { AddWorkerModal } from "@/components/trabajadores/AddWorkerModal";
 import { DocumentosTrabajador } from "@/components/trabajadores/DocumentosTrabajador";
 import { PerfilSocioModal, type PerfilSocio } from "@/components/trabajadores/PerfilSocioModal";
