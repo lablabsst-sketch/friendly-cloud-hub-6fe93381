@@ -308,6 +308,67 @@ export default function TrabajadorDetail() {
             </div>
           </TabsContent>
 
+          {/* TAB — CAPACITACIONES */}
+          <TabsContent value="capacitaciones" className="mt-4">
+            <div className="rounded-lg border bg-card p-4">
+              <p className="text-sm font-semibold mb-3">Historial de capacitaciones</p>
+              {capacitaciones.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Sin capacitaciones asignadas.</p>
+              ) : (
+                <div className="divide-y">
+                  {capacitaciones.map((a: any) => (
+                    <div key={a.id} className="py-2.5 flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{a.capacitacion?.titulo ?? "—"}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {a.capacitacion?.fecha ? fmt(a.capacitacion.fecha) : "—"}
+                          {a.capacitacion?.modalidad ? ` · ${a.capacitacion.modalidad}` : ""}
+                          {a.capacitacion?.duracion_horas ? ` · ${a.capacitacion.duracion_horas}h` : ""}
+                        </p>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium shrink-0 ${a.firmado_en || a.asistio ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-amber-100 text-amber-700 border-amber-200"}`}>
+                        {a.firmado_en || a.asistio ? "Asistió" : "Pendiente"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* TAB — EXÁMENES MÉDICOS */}
+          <TabsContent value="examenes" className="mt-4">
+            <div className="rounded-lg border bg-card p-4">
+              <p className="text-sm font-semibold mb-3">Exámenes médicos</p>
+              {examenes.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Sin exámenes registrados.</p>
+              ) : (
+                <div className="divide-y">
+                  {examenes.map((e: any) => (
+                    <div key={e.id} className="py-2.5 flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground capitalize">{e.tipo}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {fmt(e.fecha)}
+                          {e.proximo_control ? ` · Próx. control: ${fmt(e.proximo_control)}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-slate-100 text-slate-700 border-slate-200 capitalize">
+                          {(e.resultado ?? "pendiente").replace(/_/g, " ")}
+                        </span>
+                        {e.soporte_url && (
+                          <a href={e.soporte_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline">Ver</a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+
           {/* TAB 5 — PERFIL SOCIODEMOGRÁFICO (solo admin/asistente) */}
           {canSeePerfil && (
             <TabsContent value="perfil" className="mt-4">
