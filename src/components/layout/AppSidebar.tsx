@@ -11,6 +11,8 @@ import { useLocation } from "react-router-dom";
 import { useEffect, useRef, useState, KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import logoSstlink from "@/assets/logo-sstlink.png";
 
 const STORAGE_KEY = "sstlink:sidebar:expanded";
