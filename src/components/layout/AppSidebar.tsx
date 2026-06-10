@@ -421,7 +421,9 @@ export function AppSidebar() {
           expanded ? "items-stretch" : "items-center"
         )}
       >
-        {bottomItems.map(renderItem)}
+        {bottomItems.map((it) =>
+          renderItem(it.url === "/empresa" ? { ...it, badgeCount: pendingEnlaces } : it)
+        )}
       </nav>
     </aside>
   );
