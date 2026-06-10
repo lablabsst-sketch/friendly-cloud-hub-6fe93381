@@ -63,6 +63,8 @@ export default function TrabajadorDetail() {
   const { empresa, usuario } = useAuth();
   const [worker, setWorker] = useState<any>(null);
   const [perfil, setPerfil] = useState<Partial<PerfilSocio>>({});
+  const [capacitaciones, setCapacitaciones] = useState<any[]>([]);
+  const [examenes, setExamenes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [perfilOpen, setPerfilOpen] = useState(false);
@@ -75,11 +77,27 @@ export default function TrabajadorDetail() {
       .from("trabajadores")
       .select("*")
       .eq("id", id)
-      .eq("empresa_id", empresa.id)  // Defensa en profundidad — RLS ya filtra, pero validamos también en cliente
+      .eq("empresa_id", empresa.id)
       .maybeSingle();
     if (!data) { setLoading(false); return; }
     setWorker(data);
     setPerfil((data?.perfil_sociodemografico as Partial<PerfilSocio>) ?? {});
+
+    // Capacitaciones (vía asistencia_capacitacion) y exámenes
+    const [{ data: asis }, { data: exs }] = await Promise.all([
+      (supabase as any)
+        .from("asistencia_capacitacion")
+        .select("id, asistio, firmado_en, capacitacion:capacitaciones(id, titulo, fecha, modalidad, duracion_horas, estado)")
+        .eq("trabajador_id", id)
+        .order("firmado_en", { ascending: false, nullsFirst: false }),
+      (supabase as any)
+        .from("examenes_medicos")
+        .select("id, tipo, fecha, resultado, proximo_control, soporte_url")
+        .eq("trabajador_id", id)
+        .order("fecha", { ascending: false }),
+    ]);
+    setCapacitaciones(asis ?? []);
+    setExamenes(exs ?? []);
     setLoading(false);
   };
 
