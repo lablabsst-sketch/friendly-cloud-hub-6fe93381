@@ -475,18 +475,32 @@ export default function Proveedores() {
                         {puedeEditar && (
                           <div className="flex items-center justify-end gap-1">
                             {p.nit && !p.empresa_proveedor_id && (
-                              <button
-                                onClick={() => handleBuscarEnlace(p)}
-                                className="p-1.5 rounded-md hover:bg-amber-50 transition-colors text-muted-foreground hover:text-amber-600"
-                                title="Buscar enlace en plataforma"
-                              >
-                                <Link2 className="w-3.5 h-3.5" />
-                              </button>
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      onClick={() => handleBuscarEnlace(p)}
+                                      className="p-1.5 rounded-md hover:bg-amber-50 transition-colors text-muted-foreground hover:text-amber-600"
+                                      aria-label="Verificar si está en SSTLink"
+                                    >
+                                      <Plug className="w-3.5 h-3.5" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Verificar si está en SSTLink</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
                             {p.empresa_proveedor_id && (
-                              <span className="p-1.5 text-emerald-500" title="Empresa vinculada en SSTLink">
-                                <Link2 className="w-3.5 h-3.5" />
-                              </span>
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="p-1.5 text-emerald-500 inline-flex" aria-label="Vinculado en SSTLink">
+                                      <CheckCircle2 className="w-3.5 h-3.5" />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Vinculado en SSTLink</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
                             <button
                               onClick={() => { setInviteLink(""); setCopiedInvite(false); generateProvInvite(p); }}
