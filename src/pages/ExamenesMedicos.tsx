@@ -78,6 +78,7 @@ const emptyForm = {
   concepto: "",
   proximo_control: "",
   restricciones: "",
+  soporte_url: "" as string | null | "",
 };
 
 export default function ExamenesMedicos() {
