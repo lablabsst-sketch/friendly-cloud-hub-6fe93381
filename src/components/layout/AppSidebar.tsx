@@ -197,12 +197,15 @@ export function AppSidebar() {
 
   const renderItem = (item: NavItem) => {
     const isActive = location.pathname === item.url;
+    const locked = isRouteLockedForPlan(item.url, plan);
     const link = (
       <NavLink
         to={item.url}
+        onClick={locked ? handleLockedClick : undefined}
         data-sidebar-focusable="true"
         aria-current={isActive ? "page" : undefined}
-        aria-label={item.title}
+        aria-label={locked ? `${item.title} (bloqueado)` : item.title}
+        aria-disabled={locked || undefined}
         className={cn(
           "group relative flex items-center rounded-lg",
           "transition-all duration-200 ease-out",
@@ -210,7 +213,9 @@ export function AppSidebar() {
           expanded
             ? "w-[calc(100%-1rem)] h-9 px-2.5 gap-2.5 mx-2 active:scale-[0.99]"
             : "w-10 h-10 justify-center hover:scale-125 hover:-translate-y-0.5 active:scale-110",
-          isActive
+          locked
+            ? "text-muted-foreground/60 hover:bg-background/60 cursor-not-allowed"
+            : isActive
             ? "bg-accent text-accent-foreground shadow-sm"
             : "text-hint hover:bg-background hover:text-foreground"
         )}
@@ -224,8 +229,15 @@ export function AppSidebar() {
           aria-hidden="true"
         />
         {expanded && (
-          <span className="text-[13px] truncate">{item.title}</span>
+          <span className="text-[13px] truncate flex-1">{item.title}</span>
         )}
+        {locked && expanded && (
+          <Lock className="w-3 h-3 shrink-0 text-muted-foreground/70" aria-hidden="true" />
+        )}
+        {locked && !expanded && (
+          <Lock className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 text-muted-foreground/70 bg-surface rounded-full p-px" aria-hidden="true" />
+        )}
+
         {item.badgeCount && item.badgeCount > 0 ? (
           <>
             <span
