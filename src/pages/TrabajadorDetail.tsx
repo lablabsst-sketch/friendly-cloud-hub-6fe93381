@@ -508,6 +508,41 @@ export default function TrabajadorDetail() {
             onSuccess={(updated) => setPerfil(updated)}
           />
         )}
+
+        {canEditExamenes && empresa?.id && (
+          <ExamenMedicoModal
+            open={examenModalOpen}
+            onOpenChange={setExamenModalOpen}
+            empresaId={empresa.id}
+            trabajadorId={worker.id}
+            editing={editingExamen}
+            onSaved={fetchWorker}
+          />
+        )}
+
+        <AlertDialog open={!!deleteExamenId} onOpenChange={(o) => !o && setDeleteExamenId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar examen médico?</AlertDialogTitle>
+              <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  if (!deleteExamenId) return;
+                  const { error } = await (supabase as any).from("examenes_medicos").delete().eq("id", deleteExamenId);
+                  if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+                  else { toast({ title: "Examen eliminado" }); fetchWorker(); }
+                  setDeleteExamenId(null);
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );
