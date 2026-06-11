@@ -16,6 +16,8 @@ import { VerificadoToggle } from "@/components/trabajadores/VerificadoToggle";
 import { ImportarModal } from "@/components/importar/ImportarModal";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { getPlanLimits, normalizePlan, type PlanName } from "@/lib/planLimits";
+import { PlanLimitBanner } from "@/components/plan/PlanLimitBanner";
 
 interface Trabajador {
   id: string;
@@ -72,6 +74,7 @@ export default function Trabajadores() {
   const [filterCargo, setFilterCargo] = useState("todos");
   const [showModal, setShowModal] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [plan, setPlan] = useState<PlanName>("pyme");
 
   const canSeePerfil = canViewAll(usuario?.rol);
 
@@ -138,29 +141,18 @@ export default function Trabajadores() {
     URL.revokeObjectURL(url);
   };
 
-  const handleOpenAddModal = async () => {
-    if (!empresa?.id) return;
-    const { data: emp } = await (supabase as any)
-      .from("empresas")
-      .select("plan, limite_trabajadores")
-      .eq("id", empresa.id)
-      .maybeSingle();
-    const plan = emp?.plan ?? "free";
-    const limite = emp?.limite_trabajadores ?? 11;
-    if (plan === "free") {
-      const { count } = await (supabase as any)
-        .from("trabajadores")
-        .select("id", { count: "exact", head: true })
-        .eq("empresa_id", empresa.id)
-        .eq("eliminado", false);
-      if ((count ?? 0) >= limite) {
-        toast({
-          title: "Límite del plan alcanzado",
-          description: "Alcanzaste el límite de tu plan. Actualiza a Pro para agregar más trabajadores.",
-          variant: "destructive",
-        });
-        return;
-      }
+  const activeWorkersCount = workers.filter(w => (w as any).eliminado !== true).length;
+  const limit = getPlanLimits(plan).trabajadores;
+  const limitReached = activeWorkersCount >= limit;
+
+  const handleOpenAddModal = () => {
+    if (limitReached) {
+      toast({
+        title: "Límite del plan alcanzado",
+        description: `Has alcanzado el límite de tu plan. Actualiza para añadir más trabajadores (${activeWorkersCount}/${limit}).`,
+        variant: "destructive",
+      });
+      return;
     }
     setShowModal(true);
   };
@@ -168,6 +160,12 @@ export default function Trabajadores() {
   useEffect(() => {
     if (empresa?.id) fetchWorkers();
   }, [empresa?.id, fetchWorkers]);
+
+  useEffect(() => {
+    if (!empresa?.id) return;
+    (supabase as any).from("empresas").select("plan").eq("id", empresa.id).maybeSingle()
+      .then(({ data }: any) => setPlan(normalizePlan(data?.plan)));
+  }, [empresa?.id]);
 
   const handleWorkerAdded = (newWorker?: any) => {
     if (newWorker) {
