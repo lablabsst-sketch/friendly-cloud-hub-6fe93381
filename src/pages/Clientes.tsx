@@ -10,6 +10,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { AddClienteModal } from "@/components/clientes/AddClienteModal";
 import { WorkerAssignmentModal } from "@/components/clientes/WorkerAssignmentModal";
+import { getPlanLimits, normalizePlan, type PlanName } from "@/lib/planLimits";
+import { PlanLimitBanner } from "@/components/plan/PlanLimitBanner";
 
 interface Cliente {
   id: string;
@@ -34,6 +36,24 @@ export default function Clientes() {
   const [assignModal, setAssignModal] = useState<{ id: string; nombre: string } | null>(null);
   const [shareCliente, setShareCliente] = useState<Cliente | null>(null);
   const [copiedPortal, setCopiedPortal] = useState(false);
+  const [plan, setPlan] = useState<PlanName>("pyme");
+
+  const activeClientesCount = clientes.filter(c => c.activo).length;
+  const clienteLimit = getPlanLimits(plan).clientes;
+  const clienteLimitReached = activeClientesCount >= clienteLimit;
+
+  const handleOpenAdd = () => {
+    if (clienteLimitReached) {
+      toast({
+        title: "Límite del plan alcanzado",
+        description: `Has alcanzado el límite de tu plan. Actualiza para añadir más clientes (${activeClientesCount}/${clienteLimit}).`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setEditData(null);
+    setAddOpen(true);
+  };
 
   const fetchClientes = async () => {
     if (!empresa?.id) return;
