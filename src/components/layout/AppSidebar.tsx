@@ -4,16 +4,20 @@ import {
   Building2, MessageCircle, UserCheck, ShieldCheck,
   AlertTriangle, CalendarOff, Stethoscope,
   ChevronDown, LayoutGrid, HeartPulse, BookOpen,
-  PanelLeftClose, PanelLeftOpen
+  PanelLeftClose, PanelLeftOpen, Lock
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState, KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmpresaPlan } from "@/hooks/useEmpresaPlan";
+import { isRouteLockedForPlan } from "@/lib/planLimits";
+import { toast } from "sonner";
 import logoSstlink from "@/assets/logo-sstlink.png";
+
 
 const STORAGE_KEY = "sstlink:sidebar:expanded";
 
