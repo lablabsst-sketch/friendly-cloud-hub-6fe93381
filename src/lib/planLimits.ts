@@ -32,6 +32,20 @@ export const FREE_LOCKED_MODULES = [
   "estadisticas",
 ] as const;
 
+// Rutas bloqueadas para plan Free
+export const FREE_LOCKED_ROUTES: ReadonlyArray<string> = [
+  "/accidentalidad",
+  "/ausentismo",
+  "/inspecciones",
+  "/plan-anual",
+  "/estadisticas",
+];
+
+export function isRouteLockedForPlan(route: string, plan: string | null | undefined): boolean {
+  return normalizePlan(plan) === "free" && FREE_LOCKED_ROUTES.includes(route);
+}
+
+
 export function normalizePlan(plan: string | null | undefined): PlanName {
   const p = (plan ?? "").toLowerCase().trim();
   if (p === "pyme" || p === "empresarial" || p === "corporativo" || p === "premium") return p;
