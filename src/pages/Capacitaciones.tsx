@@ -37,6 +37,7 @@ import {
   enviarWhatsApp, mensajeInfoCapacitacion, mensajeFirmaCapacitacion,
   generarPDFAsistencia,
 } from "@/lib/whatsapp";
+import { useEmpresaPlan } from "@/hooks/useEmpresaPlan";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
