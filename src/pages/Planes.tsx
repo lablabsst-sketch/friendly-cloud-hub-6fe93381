@@ -68,7 +68,7 @@ function CellRender({ value }: { value: Cell }) {
 
 export default function Planes() {
   const { empresa } = useAuth();
-  const currentPlan = normalizePlan(empresa?.plan);
+  const currentPlan = normalizePlan((empresa as any)?.plan);
   const [contactOpen, setContactOpen] = useState(false);
 
   return (
