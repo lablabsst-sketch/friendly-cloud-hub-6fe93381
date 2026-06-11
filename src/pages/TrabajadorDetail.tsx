@@ -351,27 +351,78 @@ export default function TrabajadorDetail() {
           {/* TAB — EXÁMENES MÉDICOS */}
           <TabsContent value="examenes" className="mt-4">
             <div className="rounded-lg border bg-card p-4">
-              <p className="text-sm font-semibold mb-3">Exámenes médicos</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold">Exámenes médicos</p>
+                {canEditExamenes && (
+                  <Button
+                    size="sm"
+                    onClick={() => { setEditingExamen(null); setExamenModalOpen(true); }}
+                    className="h-8 text-xs gap-1.5 print:hidden"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Agregar examen
+                  </Button>
+                )}
+              </div>
               {examenes.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Sin exámenes registrados.</p>
+                <p className="text-xs text-muted-foreground py-6 text-center">Sin exámenes registrados.</p>
               ) : (
                 <div className="divide-y">
-                  {examenes.map((e: any) => (
-                    <div key={e.id} className="py-2.5 flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-foreground capitalize">{e.tipo}</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {fmt(e.fecha)}
-                          {e.proximo_control ? ` · Próx. control: ${fmt(e.proximo_control)}` : ""}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-slate-100 text-slate-700 border-slate-200 capitalize">
-                          {(e.resultado ?? "pendiente").replace(/_/g, " ")}
-                        </span>
-                        {e.soporte_url && (
-                          <a href={e.soporte_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline">Ver</a>
-                        )}
+                  {examenes.map((e) => (
+                    <div key={e.id} className="py-3 space-y-1.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-xs font-medium text-foreground capitalize">{e.tipo.replace(/_/g, " ")}</p>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-slate-100 text-slate-700 border-slate-200 capitalize">
+                              {(e.resultado ?? "pendiente").replace(/_/g, " ")}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {fmt(e.fecha)}
+                            {e.proximo_control ? ` · Próx. control: ${fmt(e.proximo_control)}` : ""}
+                          </p>
+                          {e.concepto && (
+                            <p className="text-[11px] text-foreground/80 mt-1"><span className="text-muted-foreground">Concepto:</span> {e.concepto}</p>
+                          )}
+                          {e.restricciones && (
+                            <p className="text-[11px] text-foreground/80 mt-0.5"><span className="text-muted-foreground">Restricciones:</span> {e.restricciones}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0 print:hidden">
+                          {e.soporte_url && (
+                            <a
+                              href={e.soporte_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent text-muted-foreground hover:text-primary"
+                              title="Ver soporte"
+                            >
+                              <Paperclip className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          {canEditExamenes && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => { setEditingExamen(e); setExamenModalOpen(true); }}
+                              title="Editar"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                          {canDeleteExamenes && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              onClick={() => setDeleteExamenId(e.id)}
+                              title="Eliminar"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
