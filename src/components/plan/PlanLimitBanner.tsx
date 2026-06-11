@@ -33,7 +33,7 @@ export function PlanLimitBanner({ plan, resource, count, limit }: Props) {
         </p>
       </div>
       <Button asChild size="sm" variant="outline" className="h-7 text-xs border-amber-400 bg-white hover:bg-amber-100">
-        <Link to="/mi-empresa">Ver planes</Link>
+        <Link to="/planes">Ver planes</Link>
       </Button>
     </div>
   );
