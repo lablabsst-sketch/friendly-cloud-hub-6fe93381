@@ -129,7 +129,7 @@ const App = () => (
               path="/plan-anual"
               element={
                 <ProtectedRoute>
-                  <PlanAnual />
+                  <PlanGuard><PlanAnual /></PlanGuard>
                 </ProtectedRoute>
               }
             />
@@ -145,7 +145,7 @@ const App = () => (
               path="/inspecciones"
               element={
                 <ProtectedRoute>
-                  <Inspecciones />
+                  <PlanGuard><Inspecciones /></PlanGuard>
                 </ProtectedRoute>
               }
             />
@@ -153,7 +153,7 @@ const App = () => (
               path="/estadisticas"
               element={
                 <ProtectedRoute>
-                  <Estadisticas />
+                  <PlanGuard><Estadisticas /></PlanGuard>
                 </ProtectedRoute>
               }
             />
