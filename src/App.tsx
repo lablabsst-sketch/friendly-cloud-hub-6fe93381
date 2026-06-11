@@ -164,6 +164,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/planes"
+              element={
+                <ProtectedRoute>
+                  <Planes />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
