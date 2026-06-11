@@ -37,6 +37,7 @@ import {
   enviarWhatsApp, mensajeInfoCapacitacion, mensajeFirmaCapacitacion,
   generarPDFAsistencia,
 } from "@/lib/whatsapp";
+import { useEmpresaPlan } from "@/hooks/useEmpresaPlan";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -176,6 +177,7 @@ const getAttendeeDoc = (a: AsistenciaRecord): string => {
 export default function Capacitaciones() {
   const { empresa } = useAuth();
   const { toast } = useToast();
+  const plan = useEmpresaPlan();
 
   // Data
   const [caps, setCaps] = useState<Capacitacion[]>([]);
@@ -333,6 +335,27 @@ export default function Capacitaciones() {
 
   const save = async () => {
     if (!empresa?.id || !form.titulo || !form.fecha) return;
+
+    // Free plan: max 1 capacitación por mes (solo al crear)
+    if (!editing && plan === "free") {
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      const { count } = await (supabase as any)
+        .from("capacitaciones")
+        .select("id", { count: "exact", head: true })
+        .eq("empresa_id", empresa.id)
+        .gte("created_at", monthStart.toISOString());
+      if ((count ?? 0) >= 1) {
+        toast({
+          title: "Límite del Plan Free alcanzado",
+          description: "Has usado tu capacitación gratuita del mes. Actualiza tu plan para crear más.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(true);
 
     const payload = {

@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PlanGuard } from "@/components/auth/PlanGuard";
 import Landing from "./pages/Landing.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
@@ -87,7 +88,7 @@ const App = () => (
               path="/accidentalidad"
               element={
                 <ProtectedRoute>
-                  <Accidentalidad />
+                  <PlanGuard><Accidentalidad /></PlanGuard>
                 </ProtectedRoute>
               }
             />
@@ -95,7 +96,7 @@ const App = () => (
               path="/ausentismo"
               element={
                 <ProtectedRoute>
-                  <Ausentismo />
+                  <PlanGuard><Ausentismo /></PlanGuard>
                 </ProtectedRoute>
               }
             />
@@ -128,7 +129,7 @@ const App = () => (
               path="/plan-anual"
               element={
                 <ProtectedRoute>
-                  <PlanAnual />
+                  <PlanGuard><PlanAnual /></PlanGuard>
                 </ProtectedRoute>
               }
             />
@@ -144,7 +145,7 @@ const App = () => (
               path="/inspecciones"
               element={
                 <ProtectedRoute>
-                  <Inspecciones />
+                  <PlanGuard><Inspecciones /></PlanGuard>
                 </ProtectedRoute>
               }
             />
@@ -152,7 +153,7 @@ const App = () => (
               path="/estadisticas"
               element={
                 <ProtectedRoute>
-                  <Estadisticas />
+                  <PlanGuard><Estadisticas /></PlanGuard>
                 </ProtectedRoute>
               }
             />
