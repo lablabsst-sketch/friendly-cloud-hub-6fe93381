@@ -104,7 +104,7 @@ export default function TrabajadorDetail() {
         .order("firmado_en", { ascending: false, nullsFirst: false }),
       (supabase as any)
         .from("examenes_medicos")
-        .select("id, tipo, fecha, resultado, proximo_control, soporte_url")
+        .select("id, tipo, fecha, resultado, concepto, restricciones, proximo_control, soporte_url")
         .eq("trabajador_id", id)
         .order("fecha", { ascending: false }),
     ]);
