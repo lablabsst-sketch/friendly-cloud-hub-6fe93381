@@ -84,6 +84,12 @@ export default function Clientes() {
 
   useEffect(() => { fetchClientes(); }, [empresa?.id]);
 
+  useEffect(() => {
+    if (!empresa?.id) return;
+    (supabase as any).from("empresas").select("plan").eq("id", empresa.id).maybeSingle()
+      .then(({ data }: any) => setPlan(normalizePlan(data?.plan)));
+  }, [empresa?.id]);
+
   const copyPortalMessage = (c: Cliente) => {
     const url = `${window.location.origin}/portal`;
     const msg = `Hola ${c.nombre},\n\nTe compartimos acceso al portal de SSTLink para consultar documentos y trabajadores asignados.\n\nEnlace: ${url}\nTu NIT/Cédula de acceso: ${c.nit_cedula}\n\nSaludos.`;
