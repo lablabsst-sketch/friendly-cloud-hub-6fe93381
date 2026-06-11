@@ -226,12 +226,14 @@ export default function Trabajadores() {
               <Upload className="w-3.5 h-3.5" aria-hidden="true" />
               Importar CSV
             </Button>
-            <Button onClick={handleOpenAddModal} className="gap-1.5 text-xs h-9">
+            <Button onClick={handleOpenAddModal} disabled={limitReached} className="gap-1.5 text-xs h-9">
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               Añadir Trabajador
             </Button>
           </div>
         </div>
+
+        <PlanLimitBanner plan={plan} resource="trabajadores" count={activeWorkersCount} limit={limit} />
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-2">
@@ -281,7 +283,7 @@ export default function Trabajadores() {
             </div>
             <p className="text-sm font-medium text-foreground mb-1">Aún no tienes trabajadores registrados</p>
             <p className="text-xs text-muted-foreground mb-4">Comienza agregando tu primer trabajador al sistema.</p>
-            <Button onClick={handleOpenAddModal} className="gap-1.5 text-xs h-9">
+            <Button onClick={handleOpenAddModal} disabled={limitReached} className="gap-1.5 text-xs h-9">
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               Agregar el primer trabajador
             </Button>
