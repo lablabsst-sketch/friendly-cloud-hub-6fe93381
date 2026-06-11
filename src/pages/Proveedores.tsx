@@ -366,11 +366,13 @@ export default function Proveedores() {
               <p className="text-xs text-muted-foreground">{activos} activos · {proveedores.length} total</p>}
           </div>
           {puedeEditar && (
-            <Button onClick={openNew} className="gap-1.5 text-xs h-9">
+            <Button onClick={openNew} disabled={provLimitReached} className="gap-1.5 text-xs h-9">
               <Plus className="w-3.5 h-3.5" /> Agregar proveedor
             </Button>
           )}
         </div>
+
+        <PlanLimitBanner plan={plan} resource="proveedores" count={activeProvCount} limit={provLimit} />
 
         {/* Stats */}
         {!loading && proveedores.length > 0 && (
@@ -426,7 +428,7 @@ export default function Proveedores() {
             <p className="text-sm font-medium mb-1">Sin proveedores registrados</p>
             <p className="text-xs text-muted-foreground mb-4">Registra los proveedores y contratistas que trabajan con tu empresa.</p>
             {puedeEditar && (
-              <Button onClick={openNew} className="gap-1.5 text-xs h-9">
+              <Button onClick={openNew} disabled={provLimitReached} className="gap-1.5 text-xs h-9">
                 <Plus className="w-3.5 h-3.5" /> Agregar primer proveedor
               </Button>
             )}
