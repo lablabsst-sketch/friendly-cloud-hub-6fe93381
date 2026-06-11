@@ -7,12 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Pencil, User, Briefcase, Heart, FileText, BarChart2, Lock, GraduationCap, Stethoscope, Printer } from "lucide-react";
+import { ArrowLeft, Pencil, User, Briefcase, Heart, FileText, BarChart2, Lock, GraduationCap, Stethoscope, Printer, Plus, Trash2, Paperclip } from "lucide-react";
 import { AddWorkerModal } from "@/components/trabajadores/AddWorkerModal";
 import { DocumentosTrabajador } from "@/components/trabajadores/DocumentosTrabajador";
 import { PerfilSocioModal, type PerfilSocio } from "@/components/trabajadores/PerfilSocioModal";
+import { ExamenMedicoModal, type ExamenMedicoRecord } from "@/components/trabajadores/ExamenMedicoModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { canViewAll } from "@/lib/roles";
+import { canViewAll, canEdit, canAdmin } from "@/lib/roles";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
