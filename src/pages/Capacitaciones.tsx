@@ -177,6 +177,7 @@ const getAttendeeDoc = (a: AsistenciaRecord): string => {
 export default function Capacitaciones() {
   const { empresa } = useAuth();
   const { toast } = useToast();
+  const plan = useEmpresaPlan();
 
   // Data
   const [caps, setCaps] = useState<Capacitacion[]>([]);
