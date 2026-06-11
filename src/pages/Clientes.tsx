@@ -10,6 +10,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { AddClienteModal } from "@/components/clientes/AddClienteModal";
 import { WorkerAssignmentModal } from "@/components/clientes/WorkerAssignmentModal";
+import { getPlanLimits, normalizePlan, type PlanName } from "@/lib/planLimits";
+import { PlanLimitBanner } from "@/components/plan/PlanLimitBanner";
 
 interface Cliente {
   id: string;
@@ -34,6 +36,24 @@ export default function Clientes() {
   const [assignModal, setAssignModal] = useState<{ id: string; nombre: string } | null>(null);
   const [shareCliente, setShareCliente] = useState<Cliente | null>(null);
   const [copiedPortal, setCopiedPortal] = useState(false);
+  const [plan, setPlan] = useState<PlanName>("pyme");
+
+  const activeClientesCount = clientes.filter(c => c.activo).length;
+  const clienteLimit = getPlanLimits(plan).clientes;
+  const clienteLimitReached = activeClientesCount >= clienteLimit;
+
+  const handleOpenAdd = () => {
+    if (clienteLimitReached) {
+      toast({
+        title: "Límite del plan alcanzado",
+        description: `Has alcanzado el límite de tu plan. Actualiza para añadir más clientes (${activeClientesCount}/${clienteLimit}).`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setEditData(null);
+    setAddOpen(true);
+  };
 
   const fetchClientes = async () => {
     if (!empresa?.id) return;
@@ -64,6 +84,12 @@ export default function Clientes() {
 
   useEffect(() => { fetchClientes(); }, [empresa?.id]);
 
+  useEffect(() => {
+    if (!empresa?.id) return;
+    (supabase as any).from("empresas").select("plan").eq("id", empresa.id).maybeSingle()
+      .then(({ data }: any) => setPlan(normalizePlan(data?.plan)));
+  }, [empresa?.id]);
+
   const copyPortalMessage = (c: Cliente) => {
     const url = `${window.location.origin}/portal`;
     const msg = `Hola ${c.nombre},\n\nTe compartimos acceso al portal de SSTLink para consultar documentos y trabajadores asignados.\n\nEnlace: ${url}\nTu NIT/Cédula de acceso: ${c.nit_cedula}\n\nSaludos.`;
@@ -93,10 +119,13 @@ export default function Clientes() {
             <h1 className="text-xl font-bold text-foreground">Clientes</h1>
             <p className="text-sm text-muted-foreground">Gestiona los clientes que acceden al portal de trabajadores.</p>
           </div>
-          <Button onClick={() => { setEditData(null); setAddOpen(true); }} size="sm">
+          <Button onClick={handleOpenAdd} disabled={clienteLimitReached} size="sm">
             <Plus className="w-4 h-4 mr-1" /> Agregar Cliente
           </Button>
         </div>
+
+        <PlanLimitBanner plan={plan} resource="clientes" count={activeClientesCount} limit={clienteLimit} />
+
 
         {loading ? (
           <div className="text-center text-muted-foreground py-12">Cargando…</div>
