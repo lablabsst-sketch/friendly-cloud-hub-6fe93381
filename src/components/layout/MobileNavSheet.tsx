@@ -67,6 +67,7 @@ export function MobileNavSheet({ trigger }: MobileNavSheetProps) {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const plan = useEmpresaPlan();
 
   const close = () => setOpen(false);
 
@@ -78,24 +79,39 @@ export function MobileNavSheet({ trigger }: MobileNavSheetProps) {
 
   const renderItem = (item: NavItem) => {
     const isActive = pathname === item.url;
+    const locked = isRouteLockedForPlan(item.url, plan);
     return (
       <NavLink
         key={item.url}
         to={item.url}
-        onClick={close}
+        onClick={(e) => {
+          if (locked) {
+            e.preventDefault();
+            close();
+            toast("Este módulo está disponible desde el Plan Pyme", {
+              action: { label: "Ver planes", onClick: () => navigate("/planes") },
+            });
+            return;
+          }
+          close();
+        }}
         aria-current={isActive ? "page" : undefined}
+        aria-disabled={locked || undefined}
         className={cn(
           "flex items-center gap-3 px-3 rounded-lg min-h-[44px] text-[14px]",
           "transition-colors",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-          isActive
+          locked
+            ? "text-muted-foreground/60"
+            : isActive
             ? "bg-accent text-accent-foreground font-medium"
             : "text-foreground hover:bg-background"
         )}
       >
         <item.icon className="w-[18px] h-[18px] shrink-0" aria-hidden="true" />
         <span className="flex-1 truncate">{item.title}</span>
-        {item.badge && (
+        {locked && <Lock className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" aria-hidden="true" />}
+        {item.badge && !locked && (
           <>
             <span className="w-1.5 h-1.5 rounded-full bg-destructive" aria-hidden="true" />
             <span className="sr-only">(novedades)</span>
@@ -104,6 +120,7 @@ export function MobileNavSheet({ trigger }: MobileNavSheetProps) {
       </NavLink>
     );
   };
+
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
