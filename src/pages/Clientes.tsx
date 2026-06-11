@@ -119,10 +119,13 @@ export default function Clientes() {
             <h1 className="text-xl font-bold text-foreground">Clientes</h1>
             <p className="text-sm text-muted-foreground">Gestiona los clientes que acceden al portal de trabajadores.</p>
           </div>
-          <Button onClick={() => { setEditData(null); setAddOpen(true); }} size="sm">
+          <Button onClick={handleOpenAdd} disabled={clienteLimitReached} size="sm">
             <Plus className="w-4 h-4 mr-1" /> Agregar Cliente
           </Button>
         </div>
+
+        <PlanLimitBanner plan={plan} resource="clientes" count={activeClientesCount} limit={clienteLimit} />
+
 
         {loading ? (
           <div className="text-center text-muted-foreground py-12">Cargando…</div>
