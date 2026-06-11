@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { getPlanLimits, normalizePlan, type PlanName } from "@/lib/planLimits";
+import { PlanLimitBanner } from "@/components/plan/PlanLimitBanner";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Proveedor {
@@ -108,6 +110,11 @@ export default function Proveedores() {
   const [generatingInvite, setGeneratingInvite] = useState(false);
   const [copiedInvite, setCopiedInvite] = useState(false);
 
+  const [plan, setPlan] = useState<PlanName>("pyme");
+  const activeProvCount = proveedores.filter(p => p.estado !== "inactivo").length;
+  const provLimit = getPlanLimits(plan).proveedores;
+  const provLimitReached = activeProvCount >= provLimit;
+
   // ── Fetch ────────────────────────────────────────────────────────────────────
   const fetchProveedores = useCallback(async () => {
     if (!empresa?.id) return;
@@ -125,7 +132,22 @@ export default function Proveedores() {
   useEffect(() => { fetchProveedores(); }, [fetchProveedores]);
 
   // ── Dialog helpers ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!empresa?.id) return;
+    (supabase as any).from("empresas").select("plan").eq("id", empresa.id).maybeSingle()
+      .then(({ data }: any) => setPlan(normalizePlan(data?.plan)));
+  }, [empresa?.id]);
+
+  // ── Dialog helpers ───────────────────────────────────────────────────────────
   const openNew = () => {
+    if (provLimitReached) {
+      toast({
+        title: "Límite del plan alcanzado",
+        description: `Has alcanzado el límite de tu plan. Actualiza para añadir más proveedores (${activeProvCount}/${provLimit}).`,
+        variant: "destructive",
+      });
+      return;
+    }
     setEditing(null);
     setForm(blank);
     setDialogOpen(true);
