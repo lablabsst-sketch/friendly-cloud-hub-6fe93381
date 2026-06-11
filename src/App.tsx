@@ -88,7 +88,7 @@ const App = () => (
               path="/accidentalidad"
               element={
                 <ProtectedRoute>
-                  <Accidentalidad />
+                  <PlanGuard><Accidentalidad /></PlanGuard>
                 </ProtectedRoute>
               }
             />
@@ -96,7 +96,7 @@ const App = () => (
               path="/ausentismo"
               element={
                 <ProtectedRoute>
-                  <Ausentismo />
+                  <PlanGuard><Ausentismo /></PlanGuard>
                 </ProtectedRoute>
               }
             />
