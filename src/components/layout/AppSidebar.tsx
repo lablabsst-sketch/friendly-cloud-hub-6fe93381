@@ -87,8 +87,18 @@ const bottomItems: NavItem[] = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { empresa } = useAuth();
+  const plan = useEmpresaPlan();
   const [pendingEnlaces, setPendingEnlaces] = useState(0);
+
+  const handleLockedClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toast("Este módulo está disponible desde el Plan Pyme", {
+      action: { label: "Ver planes", onClick: () => navigate("/planes") },
+    });
+  };
+
 
   useEffect(() => {
     if (!empresa?.id) { setPendingEnlaces(0); return; }
