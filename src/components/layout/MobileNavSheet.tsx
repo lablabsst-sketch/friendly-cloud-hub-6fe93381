@@ -3,7 +3,7 @@ import {
   ClipboardCheck, BarChart3, CalendarRange,
   Building2, MessageCircle, UserCheck, ShieldCheck,
   AlertTriangle, CalendarOff, Stethoscope,
-  LayoutGrid, HeartPulse, BookOpen, LogOut,
+  LayoutGrid, HeartPulse, BookOpen, LogOut, Lock,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -11,7 +11,11 @@ import { ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
+import { useEmpresaPlan } from "@/hooks/useEmpresaPlan";
+import { isRouteLockedForPlan } from "@/lib/planLimits";
+import { toast } from "sonner";
 import logoSstlink from "@/assets/logo-sstlink.png";
+
 
 type NavItem = { title: string; url: string; icon: typeof LayoutDashboard; badge?: boolean };
 type NavCategory = { id: string; title: string; icon: typeof LayoutDashboard; items: NavItem[] };
