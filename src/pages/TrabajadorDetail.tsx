@@ -70,12 +70,18 @@ export default function TrabajadorDetail() {
   const [worker, setWorker] = useState<any>(null);
   const [perfil, setPerfil] = useState<Partial<PerfilSocio>>({});
   const [capacitaciones, setCapacitaciones] = useState<any[]>([]);
-  const [examenes, setExamenes] = useState<any[]>([]);
+  const [examenes, setExamenes] = useState<ExamenMedicoRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [perfilOpen, setPerfilOpen] = useState(false);
+  const [examenModalOpen, setExamenModalOpen] = useState(false);
+  const [editingExamen, setEditingExamen] = useState<ExamenMedicoRecord | null>(null);
+  const [deleteExamenId, setDeleteExamenId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const canSeePerfil = canViewAll(usuario?.rol);
+  const canEditExamenes = canEdit(usuario?.rol);
+  const canDeleteExamenes = canAdmin(usuario?.rol);
 
   const fetchWorker = async () => {
     if (!id || !empresa?.id) return;
