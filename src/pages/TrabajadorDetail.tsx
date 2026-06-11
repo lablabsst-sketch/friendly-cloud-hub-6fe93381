@@ -7,12 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Pencil, User, Briefcase, Heart, FileText, BarChart2, Lock, GraduationCap, Stethoscope, Printer } from "lucide-react";
+import { ArrowLeft, Pencil, User, Briefcase, Heart, FileText, BarChart2, Lock, GraduationCap, Stethoscope, Printer, Plus, Trash2, Paperclip } from "lucide-react";
 import { AddWorkerModal } from "@/components/trabajadores/AddWorkerModal";
 import { DocumentosTrabajador } from "@/components/trabajadores/DocumentosTrabajador";
 import { PerfilSocioModal, type PerfilSocio } from "@/components/trabajadores/PerfilSocioModal";
+import { ExamenMedicoModal, type ExamenMedicoRecord } from "@/components/trabajadores/ExamenMedicoModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { canViewAll } from "@/lib/roles";
+import { canViewAll, canEdit, canAdmin } from "@/lib/roles";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -64,12 +70,18 @@ export default function TrabajadorDetail() {
   const [worker, setWorker] = useState<any>(null);
   const [perfil, setPerfil] = useState<Partial<PerfilSocio>>({});
   const [capacitaciones, setCapacitaciones] = useState<any[]>([]);
-  const [examenes, setExamenes] = useState<any[]>([]);
+  const [examenes, setExamenes] = useState<ExamenMedicoRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [perfilOpen, setPerfilOpen] = useState(false);
+  const [examenModalOpen, setExamenModalOpen] = useState(false);
+  const [editingExamen, setEditingExamen] = useState<ExamenMedicoRecord | null>(null);
+  const [deleteExamenId, setDeleteExamenId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const canSeePerfil = canViewAll(usuario?.rol);
+  const canEditExamenes = canEdit(usuario?.rol);
+  const canDeleteExamenes = canAdmin(usuario?.rol);
 
   const fetchWorker = async () => {
     if (!id || !empresa?.id) return;
@@ -92,7 +104,7 @@ export default function TrabajadorDetail() {
         .order("firmado_en", { ascending: false, nullsFirst: false }),
       (supabase as any)
         .from("examenes_medicos")
-        .select("id, tipo, fecha, resultado, proximo_control, soporte_url")
+        .select("id, tipo, fecha, resultado, concepto, restricciones, proximo_control, soporte_url")
         .eq("trabajador_id", id)
         .order("fecha", { ascending: false }),
     ]);
@@ -339,27 +351,78 @@ export default function TrabajadorDetail() {
           {/* TAB — EXÁMENES MÉDICOS */}
           <TabsContent value="examenes" className="mt-4">
             <div className="rounded-lg border bg-card p-4">
-              <p className="text-sm font-semibold mb-3">Exámenes médicos</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold">Exámenes médicos</p>
+                {canEditExamenes && (
+                  <Button
+                    size="sm"
+                    onClick={() => { setEditingExamen(null); setExamenModalOpen(true); }}
+                    className="h-8 text-xs gap-1.5 print:hidden"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Agregar examen
+                  </Button>
+                )}
+              </div>
               {examenes.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Sin exámenes registrados.</p>
+                <p className="text-xs text-muted-foreground py-6 text-center">Sin exámenes registrados.</p>
               ) : (
                 <div className="divide-y">
-                  {examenes.map((e: any) => (
-                    <div key={e.id} className="py-2.5 flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-foreground capitalize">{e.tipo}</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {fmt(e.fecha)}
-                          {e.proximo_control ? ` · Próx. control: ${fmt(e.proximo_control)}` : ""}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-slate-100 text-slate-700 border-slate-200 capitalize">
-                          {(e.resultado ?? "pendiente").replace(/_/g, " ")}
-                        </span>
-                        {e.soporte_url && (
-                          <a href={e.soporte_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline">Ver</a>
-                        )}
+                  {examenes.map((e) => (
+                    <div key={e.id} className="py-3 space-y-1.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-xs font-medium text-foreground capitalize">{e.tipo.replace(/_/g, " ")}</p>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-slate-100 text-slate-700 border-slate-200 capitalize">
+                              {(e.resultado ?? "pendiente").replace(/_/g, " ")}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {fmt(e.fecha)}
+                            {e.proximo_control ? ` · Próx. control: ${fmt(e.proximo_control)}` : ""}
+                          </p>
+                          {e.concepto && (
+                            <p className="text-[11px] text-foreground/80 mt-1"><span className="text-muted-foreground">Concepto:</span> {e.concepto}</p>
+                          )}
+                          {e.restricciones && (
+                            <p className="text-[11px] text-foreground/80 mt-0.5"><span className="text-muted-foreground">Restricciones:</span> {e.restricciones}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0 print:hidden">
+                          {e.soporte_url && (
+                            <a
+                              href={e.soporte_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent text-muted-foreground hover:text-primary"
+                              title="Ver soporte"
+                            >
+                              <Paperclip className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          {canEditExamenes && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => { setEditingExamen(e); setExamenModalOpen(true); }}
+                              title="Editar"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                          {canDeleteExamenes && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              onClick={() => setDeleteExamenId(e.id)}
+                              title="Eliminar"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -445,6 +508,41 @@ export default function TrabajadorDetail() {
             onSuccess={(updated) => setPerfil(updated)}
           />
         )}
+
+        {canEditExamenes && empresa?.id && (
+          <ExamenMedicoModal
+            open={examenModalOpen}
+            onOpenChange={setExamenModalOpen}
+            empresaId={empresa.id}
+            trabajadorId={worker.id}
+            editing={editingExamen}
+            onSaved={fetchWorker}
+          />
+        )}
+
+        <AlertDialog open={!!deleteExamenId} onOpenChange={(o) => !o && setDeleteExamenId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar examen médico?</AlertDialogTitle>
+              <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  if (!deleteExamenId) return;
+                  const { error } = await (supabase as any).from("examenes_medicos").delete().eq("id", deleteExamenId);
+                  if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+                  else { toast({ title: "Examen eliminado" }); fetchWorker(); }
+                  setDeleteExamenId(null);
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );
