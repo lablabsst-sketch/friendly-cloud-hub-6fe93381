@@ -772,6 +772,9 @@ export default function MiEmpresa() {
           )}
         </div>
 
+        {/* ── Sedes ── */}
+        <SedesSection rol={usuario?.rol} />
+
         {/* ── Equipo ── */}
         {canAdmin(usuario?.rol) && (
           <div className="bg-surface rounded-xl border-[0.5px] border-border p-4">
