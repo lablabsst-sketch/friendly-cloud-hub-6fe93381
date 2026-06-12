@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonRows } from "@/components/SkeletonRows";
+import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarOff, Plus, Pencil, Trash2, Clock, BarChart3, Users } from "lucide-react";
 
@@ -247,13 +249,14 @@ export default function Ausentismo() {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <div className="p-6 space-y-3">{Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+              <div className="p-6"><SkeletonRows rows={4} height="h-10" /></div>
             ) : filtered.length === 0 ? (
-              <div className="py-16 text-center">
-                <CalendarOff className="mx-auto h-9 w-9 text-muted-foreground/30 mb-2" />
-                <p className="text-sm text-muted-foreground font-medium">No hay ausencias registradas</p>
-                <p className="text-xs text-muted-foreground">Haz clic en "Registrar ausencia" para comenzar.</p>
-              </div>
+              <EmptyState
+                icon={CalendarOff}
+                title="No hay ausencias registradas"
+                description="Lleva el control de incapacidades, permisos y licencias del equipo."
+                action={{ label: "Registrar ausencia", onClick: openCreate, icon: Plus }}
+              />
             ) : (
               <div className="overflow-x-auto">
                 <Table>

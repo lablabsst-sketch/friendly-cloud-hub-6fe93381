@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { SkeletonCards } from "@/components/SkeletonRows";
+import { EmptyState } from "@/components/EmptyState";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -143,15 +145,14 @@ export default function Contratistas() {
         </div>
 
         {loading ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {[1,2,3].map(i => <div key={i} className="h-32 rounded-xl bg-muted animate-pulse" />)}
-          </div>
+          <SkeletonCards count={3} />
         ) : items.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <Truck className="w-10 h-10 mx-auto opacity-20 mb-2" />
-            <p className="text-sm">No hay contratistas registrados.</p>
-            {allowEdit && <p className="text-xs mt-1">Haz clic en "Agregar" para empezar.</p>}
-          </div>
+          <EmptyState
+            icon={Truck}
+            title="No hay contratistas registrados"
+            description="Registra los contratistas que prestan servicios a tu empresa."
+            action={allowEdit ? { label: "Agregar contratista", onClick: openNew, icon: Plus } : undefined}
+          />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {items.map(c => (

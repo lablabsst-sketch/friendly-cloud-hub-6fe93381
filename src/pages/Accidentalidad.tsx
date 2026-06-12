@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonRows } from "@/components/SkeletonRows";
+import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertTriangle, Plus, Pencil, Trash2,
@@ -267,13 +269,14 @@ export default function Accidentalidad() {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <div className="p-6 space-y-3">{Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+              <div className="p-6"><SkeletonRows rows={4} height="h-10" /></div>
             ) : filtered.length === 0 ? (
-              <div className="py-16 text-center">
-                <AlertTriangle className="mx-auto h-9 w-9 text-muted-foreground/30 mb-2" />
-                <p className="text-sm text-muted-foreground font-medium">No hay accidentes registrados</p>
-                <p className="text-xs text-muted-foreground">Haz clic en "Registrar accidente" para comenzar.</p>
-              </div>
+              <EmptyState
+                icon={AlertTriangle}
+                title="No hay accidentes registrados"
+                description="Registra eventos para llevar trazabilidad y cumplir con los reportes de ley."
+                action={{ label: "Registrar accidente", onClick: openCreate, icon: Plus }}
+              />
             ) : (
               <div className="overflow-x-auto">
                 <Table>
