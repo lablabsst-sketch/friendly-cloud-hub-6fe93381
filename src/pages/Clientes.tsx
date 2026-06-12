@@ -114,10 +114,10 @@ export default function Clientes() {
   return (
     <AppLayout>
       <div className="p-4 md:p-6 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="page-header flex items-center justify-between !pb-3 !mb-3">
           <div>
-            <h1 className="text-xl font-bold text-foreground">Clientes</h1>
-            <p className="text-sm text-muted-foreground">Gestiona los clientes que acceden al portal de trabajadores.</p>
+            <h1 className="page-title">Clientes</h1>
+            <p className="page-subtitle">Gestiona los clientes que acceden al portal de trabajadores.</p>
           </div>
           <Button onClick={handleOpenAdd} disabled={clienteLimitReached} size="sm">
             <Plus className="w-4 h-4 mr-1" /> Agregar Cliente

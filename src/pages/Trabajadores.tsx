@@ -208,13 +208,13 @@ export default function Trabajadores() {
     <AppLayout breadcrumbs={["SSTLink", "Trabajadores"]}>
       <div className="space-y-4 max-w-6xl">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="page-header flex items-center justify-between !pb-3 !mb-3">
           <div>
-            <h1 className="text-lg font-medium text-foreground">Trabajadores</h1>
+            <h1 className="page-title">Trabajadores</h1>
             {loading ? (
               <Skeleton className="h-4 w-24 mt-1" />
             ) : (
-              <p className="text-xs text-muted-foreground">{activeCount} activos</p>
+              <p className="page-subtitle">{activeCount} activos</p>
             )}
           </div>
           <div className="flex gap-2">
@@ -298,13 +298,13 @@ export default function Trabajadores() {
             <div className="hidden md:block bg-card rounded-xl border-[0.5px] border-border overflow-hidden">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-border bg-background">
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground uppercase tracking-wide text-[10px]">Trabajador</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground uppercase tracking-wide text-[10px]">Cargo</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground uppercase tracking-wide text-[10px]">Fecha Ingreso</th>
-                    <th className="text-left px-4 py-3 font-medium text-muted-foreground uppercase tracking-wide text-[10px]">Estado</th>
-                    <th className="text-center px-4 py-3 font-medium text-muted-foreground uppercase tracking-wide text-[10px]">Verificado</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground uppercase tracking-wide text-[10px]">Acciones</th>
+                  <tr className="bg-[#F1F5F9] border-b border-[#E2E8F0]">
+                    <th className="text-left px-4 py-2.5 font-semibold text-[#334155] uppercase tracking-wide text-xs">Trabajador</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-[#334155] uppercase tracking-wide text-xs">Cargo</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-[#334155] uppercase tracking-wide text-xs">Fecha Ingreso</th>
+                    <th className="text-left px-4 py-2.5 font-semibold text-[#334155] uppercase tracking-wide text-xs">Estado</th>
+                    <th className="text-center px-4 py-2.5 font-semibold text-[#334155] uppercase tracking-wide text-xs">Verificado</th>
+                    <th className="text-right px-4 py-2.5 font-semibold text-[#334155] uppercase tracking-wide text-xs">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>

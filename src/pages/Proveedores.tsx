@@ -359,11 +359,11 @@ export default function Proveedores() {
       <div className="space-y-4 max-w-6xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="page-header flex items-center justify-between !pb-3 !mb-3">
           <div>
-            <h1 className="text-lg font-medium text-foreground">Proveedores</h1>
+            <h1 className="page-title">Proveedores</h1>
             {loading ? <Skeleton className="h-4 w-24 mt-1" /> :
-              <p className="text-xs text-muted-foreground">{activos} activos · {proveedores.length} total</p>}
+              <p className="page-subtitle">{activos} activos · {proveedores.length} total</p>}
           </div>
           {puedeEditar && (
             <Button onClick={openNew} disabled={provLimitReached} className="gap-1.5 text-xs h-9">
@@ -441,9 +441,9 @@ export default function Proveedores() {
           <div className="bg-card rounded-xl border overflow-hidden">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b bg-background">
+                <tr className="bg-[#F1F5F9] border-b border-[#E2E8F0]">
                   {["Proveedor", "Tipo de servicio", "ARL", "Contrato", "Estado", ""].map(h => (
-                    <th key={h} className="text-left px-4 py-3 font-medium text-muted-foreground uppercase tracking-wide text-[10px]">{h}</th>
+                    <th key={h} className="text-left px-4 py-2.5 font-semibold text-[#334155] uppercase tracking-wide text-xs">{h}</th>
                   ))}
                 </tr>
               </thead>

@@ -1,4 +1,4 @@
-import { Users, Briefcase, TrendingUp, CalendarClock } from "lucide-react";
+import { Users, Briefcase, TrendingUp, CalendarClock, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCountUp } from "@/hooks/useCountUp";
 import { Button } from "@/components/ui/button";
@@ -8,37 +8,54 @@ import { useNavigate } from "react-router-dom";
 
 interface Props { loading: boolean; data: DashboardData; }
 
-function AnimatedMetric({ icon: Icon, iconBg, iconColor, value, suffix, label, trend, trendColor, emptyText, emptyAction, onAction }: {
-  icon: React.ElementType; iconBg: string; iconColor: string; value: number; suffix?: string;
-  label: string; trend?: string; trendColor?: string; emptyText?: string; emptyAction?: string; onAction?: () => void;
+function KpiCard({
+  icon: Icon, value, suffix, label, trend, trendDir, emptyText, emptyAction, onAction,
+}: {
+  icon: React.ElementType;
+  value: number;
+  suffix?: string;
+  label: string;
+  trend?: string;
+  trendDir?: "up" | "down" | "neutral";
+  emptyText?: string;
+  emptyAction?: string;
+  onAction?: () => void;
 }) {
   const animated = useCountUp(value);
   const isEmpty = value === 0 && emptyText;
+  const TrendIcon = trendDir === "down" ? ArrowDownRight : ArrowUpRight;
+  const trendColor =
+    trendDir === "down" ? "text-[#DC2626]" :
+    trendDir === "up" ? "text-[#16A34A]" : "text-[#64748B]";
+
   return (
-    <div className="bg-surface rounded-xl border-[0.5px] border-border p-3.5 hover:border-muted-foreground/30 transition-colors">
-      <div className="flex items-start gap-3">
-        <div className="w-[30px] h-[30px] rounded-lg flex items-center justify-center shrink-0" style={{ background: iconBg }}>
-          <Icon className="w-[14px] h-[14px]" style={{ color: iconColor }} />
+    <div className="kpi-card hover:border-[#CBD5E1] transition-colors">
+      <div className="flex items-start justify-between mb-3">
+        <div className="w-9 h-9 rounded-md bg-[#F1F5F9] flex items-center justify-center">
+          <Icon className="w-[18px] h-[18px] text-[#334155]" aria-hidden="true" />
         </div>
-        <div className="min-w-0">
-          {isEmpty ? (
-            <div className="space-y-1.5">
-              <p className="text-[11px] text-muted-foreground">{emptyText}</p>
-              {emptyAction && (
-                <Button variant="outline" size="sm" onClick={onAction} className="h-6 text-[10px] px-2 rounded-md border-border">
-                  {emptyAction}
-                </Button>
-              )}
-            </div>
-          ) : (
-            <>
-              <p className="text-[22px] font-medium leading-tight text-foreground">{animated}{suffix}</p>
-              <p className="text-[11px] text-hint mt-0.5">{label}</p>
-              {trend && <p className={cn("text-[11px] mt-0.5")} style={{ color: trendColor }}>{trend}</p>}
-            </>
+        {trend && !isEmpty && (
+          <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", trendColor)}>
+            <TrendIcon className="w-3.5 h-3.5" />
+            {trend}
+          </span>
+        )}
+      </div>
+      {isEmpty ? (
+        <div className="space-y-2">
+          <p className="text-sm text-[#64748B]">{emptyText}</p>
+          {emptyAction && (
+            <Button variant="outline" size="sm" onClick={onAction} className="h-8 text-xs">
+              {emptyAction}
+            </Button>
           )}
         </div>
-      </div>
+      ) : (
+        <>
+          <p className="kpi-value">{animated}{suffix}</p>
+          <p className="kpi-label mt-2">{label}</p>
+        </>
+      )}
     </div>
   );
 }
@@ -46,44 +63,44 @@ function AnimatedMetric({ icon: Icon, iconBg, iconColor, value, suffix, label, t
 export function DashboardMetrics({ loading, data }: Props) {
   const navigate = useNavigate();
   if (loading) return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-      {[1,2,3,4].map(i => <Skeleton key={i} className="h-[80px] rounded-xl" />)}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {[1,2,3,4].map(i => <Skeleton key={i} className="h-[140px] rounded-lg" />)}
     </div>
   );
 
   const cumplimiento = data.itemsPlanMejora.total > 0
     ? Math.round((data.itemsPlanMejora.completados / data.itemsPlanMejora.total) * 100) : 0;
   const totalDocsAlerta = data.docsProximosVencer + data.docsVencidos;
-  const alertaDocs = data.docsVencidos > 0 ? `${data.docsVencidos} vencidos` : data.docsProximosVencer > 0 ? `${data.docsProximosVencer} vencen pronto` : undefined;
+  const alertaDocs = data.docsVencidos > 0 ? `${data.docsVencidos} vencidos` : data.docsProximosVencer > 0 ? `${data.docsProximosVencer} por vencer` : undefined;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-      <AnimatedMetric
-        icon={Users} iconBg="#FFF3EE" iconColor="#FF6B2C"
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <KpiCard
+        icon={Users}
         value={data.totalTrabajadores} label="Trabajadores activos"
-        trend={data.trabajadoresAprobados > 0 ? `${data.trabajadoresAprobados} aprobados` : data.trabajadoresPendientes > 0 ? `${data.trabajadoresPendientes} pendientes` : undefined}
-        trendColor={data.trabajadoresPendientes > 0 ? "#F59E0B" : "#16A34A"}
-        emptyText="Aún sin trabajadores registrados" emptyAction="Agregar"
+        trend={data.trabajadoresAprobados > 0 ? `${data.trabajadoresAprobados}` : data.trabajadoresPendientes > 0 ? `${data.trabajadoresPendientes}` : undefined}
+        trendDir={data.trabajadoresPendientes > 0 ? "down" : "up"}
+        emptyText="Aún sin trabajadores" emptyAction="Agregar"
         onAction={() => navigate("/trabajadores")}
       />
-      <AnimatedMetric
-        icon={Briefcase} iconBg="#FFF7ED" iconColor="#F59E0B"
+      <KpiCard
+        icon={Briefcase}
         value={data.totalContratistas} label="Contratistas activos"
-        emptyText="Sin contratistas registrados" emptyAction="Agregar"
+        emptyText="Sin contratistas" emptyAction="Agregar"
         onAction={() => navigate("/contratistas")}
       />
-      <AnimatedMetric
-        icon={TrendingUp} iconBg="#F0FDF4" iconColor="#16A34A"
-        value={cumplimiento} suffix="%" label="Cumplimiento plan de mejora"
-        trend={data.itemsPlanMejora.total > 0 ? `${data.itemsPlanMejora.completados}/${data.itemsPlanMejora.total} actividades` : undefined}
-        trendColor="#16A34A"
-        emptyText="Sin plan de mejora cargado" emptyAction="Crear plan"
+      <KpiCard
+        icon={TrendingUp}
+        value={cumplimiento} suffix="%" label="Cumplimiento plan"
+        trend={data.itemsPlanMejora.total > 0 ? `${data.itemsPlanMejora.completados}/${data.itemsPlanMejora.total}` : undefined}
+        trendDir="up"
+        emptyText="Sin plan de mejora" emptyAction="Crear plan"
       />
-      <AnimatedMetric
-        icon={CalendarClock} iconBg="#FEF2F2" iconColor="#EF4444"
+      <KpiCard
+        icon={CalendarClock}
         value={totalDocsAlerta} label="Documentos por atender"
-        trend={alertaDocs} trendColor={data.docsVencidos > 0 ? "#EF4444" : "#F59E0B"}
-        emptyText="Documentos al día ✓"
+        trend={alertaDocs} trendDir={data.docsVencidos > 0 ? "down" : "neutral"}
+        emptyText="Documentos al día"
       />
     </div>
   );
