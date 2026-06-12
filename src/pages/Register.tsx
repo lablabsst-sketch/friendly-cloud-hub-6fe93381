@@ -435,7 +435,8 @@ export default function Register() {
                 {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
               </div>
               <p className="text-[10px] text-muted-foreground">Obtendrás un plan gratuito con acceso limitado. Tu empresa quedará vinculada automáticamente como proveedor.</p>
-              <Button onClick={handleFinishProv} disabled={loading} className="w-full">
+              <PrivacyConsent checked={acceptedPrivacy} onChange={setAcceptedPrivacy} />
+              <Button onClick={handleFinishProv} disabled={loading || !acceptedPrivacy} className="w-full">
                 {loading ? "Creando cuenta…" : "Crear mi cuenta"}
               </Button>
             </div>
@@ -502,7 +503,8 @@ export default function Register() {
                 <Input type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} />
                 {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
               </div>
-              <Button onClick={handleFinishInvite} disabled={loading} className="w-full">
+              <PrivacyConsent checked={acceptedPrivacy} onChange={setAcceptedPrivacy} />
+              <Button onClick={handleFinishInvite} disabled={loading || !acceptedPrivacy} className="w-full">
                 {loading ? "Creando cuenta…" : "Unirme al equipo"}
               </Button>
             </div>
