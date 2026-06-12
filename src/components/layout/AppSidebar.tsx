@@ -453,6 +453,25 @@ export function AppSidebar() {
         {bottomItems.map((it) =>
           renderItem(it.url === "/empresa" ? { ...it, badgeCount: pendingEnlaces } : it)
         )}
+
+        {/* Legal / soporte */}
+        {expanded && (
+          <div className="px-4 pt-3 pb-1 mt-1 border-t border-white/5 flex flex-col gap-1">
+            <NavLink
+              to="/privacidad"
+              data-sidebar-focusable="true"
+              className="text-[10px] text-white/40 hover:text-white/80 transition-colors"
+            >
+              Política de privacidad
+            </NavLink>
+            <a
+              href="mailto:soporte@sstlink.co"
+              className="text-[10px] text-white/40 hover:text-white/80 transition-colors truncate"
+            >
+              soporte@sstlink.co
+            </a>
+          </div>
+        )}
       </nav>
     </aside>
   );

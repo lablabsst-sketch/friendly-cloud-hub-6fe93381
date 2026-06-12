@@ -28,6 +28,7 @@ import {
   AlertTriangle, Plus, Pencil, Trash2,
   ShieldAlert, Clock, CheckCircle2, TrendingDown,
 } from "lucide-react";
+import { SensitiveDataNotice } from "@/components/SensitiveDataNotice";
 
 interface Trabajador { id: string; nombres: string; apellidos: string; cargo: string | null; }
 interface Accidente {
@@ -195,6 +196,7 @@ export default function Accidentalidad() {
               Accidentalidad
             </h1>
             <p className="page-subtitle">Registro de accidentes e incidentes de trabajo</p>
+            <SensitiveDataNotice className="mt-2 max-w-xl" />
           </div>
           <Button size="sm" onClick={openCreate}>
             <Plus className="mr-1.5 h-4 w-4" />Registrar accidente

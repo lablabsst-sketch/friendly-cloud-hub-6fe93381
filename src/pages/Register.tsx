@@ -53,6 +53,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -434,7 +435,8 @@ export default function Register() {
                 {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
               </div>
               <p className="text-[10px] text-muted-foreground">Obtendrás un plan gratuito con acceso limitado. Tu empresa quedará vinculada automáticamente como proveedor.</p>
-              <Button onClick={handleFinishProv} disabled={loading} className="w-full">
+              <PrivacyConsent checked={acceptedPrivacy} onChange={setAcceptedPrivacy} />
+              <Button onClick={handleFinishProv} disabled={loading || !acceptedPrivacy} className="w-full">
                 {loading ? "Creando cuenta…" : "Crear mi cuenta"}
               </Button>
             </div>
@@ -501,7 +503,8 @@ export default function Register() {
                 <Input type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={e => setPassword(e.target.value)} />
                 {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
               </div>
-              <Button onClick={handleFinishInvite} disabled={loading} className="w-full">
+              <PrivacyConsent checked={acceptedPrivacy} onChange={setAcceptedPrivacy} />
+              <Button onClick={handleFinishInvite} disabled={loading || !acceptedPrivacy} className="w-full">
                 {loading ? "Creando cuenta…" : "Unirme al equipo"}
               </Button>
             </div>
@@ -697,6 +700,12 @@ export default function Register() {
             </div>
           )}
 
+          {step === 3 && (
+            <div className="mt-5">
+              <PrivacyConsent checked={acceptedPrivacy} onChange={setAcceptedPrivacy} />
+            </div>
+          )}
+
           {/* Navigation buttons */}
           <div className="flex gap-3 mt-6">
             {step > 0 && (
@@ -709,7 +718,7 @@ export default function Register() {
                 Siguiente
               </Button>
             ) : (
-              <Button onClick={handleFinish} disabled={loading} className="flex-1">
+              <Button onClick={handleFinish} disabled={loading || !acceptedPrivacy} className="flex-1">
                 {loading ? "Creando cuenta..." : "Crear cuenta"}
               </Button>
             )}
@@ -724,5 +733,36 @@ export default function Register() {
         </p>
       </div>
     </div>
+  );
+}
+
+function PrivacyConsent({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex items-start gap-2 text-[11px] text-muted-foreground cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 h-3.5 w-3.5 rounded border-border accent-[#F97316] cursor-pointer"
+        aria-required="true"
+      />
+      <span>
+        Acepto la{" "}
+        <Link
+          to="/privacidad"
+          target="_blank"
+          className="text-[#F97316] font-medium hover:underline"
+        >
+          Política de Tratamiento de Datos Personales
+        </Link>{" "}
+        de SSTLink, conforme a la Ley 1581 de 2012.
+      </span>
+    </label>
   );
 }
