@@ -199,7 +199,8 @@ export default function Capacitaciones() {
   const [searchConvocatoria, setSearchConvocatoria] = useState("");
 
   // Delete
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Detail/attendance dialog
   const [detailOpen, setDetailOpen] = useState(false);
@@ -443,10 +444,13 @@ export default function Capacitaciones() {
   // ─── Delete ────────────────────────────────────────────────────────────────
 
   const confirmDelete = async () => {
-    if (!deleteId) return;
-    await (supabase as any).from("capacitaciones").delete().eq("id", deleteId);
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await (supabase as any).from("capacitaciones").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Capacitación eliminada" });
-    setDeleteId(null);
+    setDeleteTarget(null);
     fetchAll();
   };
 
@@ -708,7 +712,7 @@ export default function Capacitaciones() {
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(c.id)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTarget({ id: c.id, nombre: c.titulo })}>
                               <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </Button>
                           </div>
@@ -1053,21 +1057,14 @@ export default function Capacitaciones() {
         </DialogContent>
       </Dialog>
 
-      {/* ─── Delete ───────────────────────────────────────────────────────────── */}
-      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar capacitación?</AlertDialogTitle>
-            <AlertDialogDescription>Se eliminarán también los registros de asistencia y firmas. Esta acción no se puede deshacer.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        itemName={deleteTarget?.nombre ?? "esta capacitación"}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="¿Eliminar capacitación?"
+      />
     </AppLayout>
   );
 }
