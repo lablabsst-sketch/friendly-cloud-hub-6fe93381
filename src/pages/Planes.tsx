@@ -10,19 +10,22 @@ import { normalizePlan, type PlanName } from "@/lib/planLimits";
 interface PlanRow {
   key: PlanName;
   name: string;
-  price: string;
+  priceMonthly: number; // COP/mes
   desc: string;
   highlighted?: boolean;
   badge?: string;
 }
 
 const PLANS: PlanRow[] = [
-  { key: "free",        name: "Free",        price: "$0",       desc: "Para empezar a digitalizar tu SST" },
-  { key: "pyme",        name: "Pyme",        price: "$22.000",  desc: "Para pequeñas empresas en crecimiento" },
-  { key: "empresarial", name: "Empresarial", price: "$44.000",  desc: "El más elegido por equipos SST", highlighted: true, badge: "Más popular" },
-  { key: "corporativo", name: "Corporativo", price: "$132.000", desc: "Para empresas medianas y grandes" },
-  { key: "premium",     name: "Premium",     price: "$198.000", desc: "Cobertura total y soporte premium" },
+  { key: "free",        name: "Free",        priceMonthly: 0,      desc: "Para empezar a digitalizar tu SST" },
+  { key: "pyme",        name: "Pyme",        priceMonthly: 22000,  desc: "Para pequeñas empresas en crecimiento" },
+  { key: "empresarial", name: "Empresarial", priceMonthly: 44000,  desc: "El más elegido por equipos SST", highlighted: true, badge: "Más popular" },
+  { key: "corporativo", name: "Corporativo", priceMonthly: 132000, desc: "Para empresas medianas y grandes" },
+  { key: "premium",     name: "Premium",     priceMonthly: 198000, desc: "Cobertura total y soporte premium" },
 ];
+
+const ANNUAL_DISCOUNT = 0.2; // 20% de descuento anual
+const fmtCOP = (n: number) => `$${n.toLocaleString("es-CO")}`;
 
 // columnas: free, pyme, empresarial, corporativo, premium
 type Cell = string | boolean | "locked";
