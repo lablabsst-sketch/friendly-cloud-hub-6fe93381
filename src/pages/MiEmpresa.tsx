@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { canAdmin } from "@/lib/roles";
+import { SedesSection } from "@/components/empresa/SedesSection";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -771,6 +772,9 @@ export default function MiEmpresa() {
             </div>
           )}
         </div>
+
+        {/* ── Sedes ── */}
+        <SedesSection rol={usuario?.rol} />
 
         {/* ── Equipo ── */}
         {canAdmin(usuario?.rol) && (

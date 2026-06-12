@@ -316,7 +316,7 @@ export default function TrabajadorDetail() {
                   <p className="text-[11px] text-muted-foreground mt-0.5">Sube PDF o imágenes — máx. 10MB por archivo</p>
                 </div>
               </div>
-              <DocumentosTrabajador trabajadorId={worker.id} trabajadorNombre={fullName} />
+              <DocumentosTrabajador trabajadorId={worker.id} trabajadorNombre={fullName} canEdit={canEditExamenes} />
             </div>
           </TabsContent>
 

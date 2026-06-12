@@ -3,7 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Plus, Users, Settings, Power, Share2, Copy, Check, Mail } from "lucide-react";
+import { Plus, Users, Settings, Power, Share2, Copy, Check, Mail, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -167,6 +167,10 @@ export default function Clientes() {
                   <Button variant="outline" size="sm" className="text-xs flex-1"
                     onClick={() => setAssignModal({ id: c.id, nombre: c.nombre })}>
                     <Settings className="w-3.5 h-3.5 mr-1" /> Trabajadores
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-xs"
+                    onClick={() => { setEditData(c); setAddOpen(true); }} title="Editar">
+                    <Pencil className="w-3.5 h-3.5" />
                   </Button>
                   <Button variant="outline" size="sm" className="text-xs"
                     onClick={() => { setShareCliente(c); setCopiedPortal(false); }}>
