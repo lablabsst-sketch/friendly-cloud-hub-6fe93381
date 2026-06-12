@@ -600,13 +600,13 @@ export default function Capacitaciones() {
       <div className="space-y-4 max-w-6xl">
 
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="page-header !pb-3 !mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-semibold flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-indigo-500" />
+            <h1 className="page-title flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-[#F97316]" />
               Capacitaciones
             </h1>
-            <p className="text-sm text-muted-foreground">Programa, registra asistencia y gestiona firmas digitales</p>
+            <p className="page-subtitle">Programa, registra asistencia y gestiona firmas digitales</p>
           </div>
           <Button size="sm" onClick={openCreate}>
             <Plus className="mr-1.5 h-4 w-4" />Nueva capacitación

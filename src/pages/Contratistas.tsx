@@ -125,12 +125,12 @@ export default function Contratistas() {
   return (
     <AppLayout breadcrumbs={["SSTLink", "Contratistas"]}>
       <div className="p-4 md:p-6 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="page-header !pb-3 !mb-3 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <Truck className="w-5 h-5" /> Contratistas
+            <h1 className="page-title flex items-center gap-2">
+              <Truck className="w-5 h-5 text-[#F97316]" /> Contratistas
             </h1>
-            <p className="text-sm text-muted-foreground">Gestiona contratistas y sus empleados.</p>
+            <p className="page-subtitle">Gestiona contratistas y sus empleados.</p>
           </div>
           {allowEdit && (
             <Button onClick={openNew} size="sm">

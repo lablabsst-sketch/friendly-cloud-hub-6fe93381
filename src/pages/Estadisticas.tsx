@@ -240,13 +240,13 @@ export default function Estadisticas() {
       <div ref={printRef} className="space-y-2 max-w-6xl print:max-w-none">
 
         {/* Header */}
-        <div className="flex items-center justify-between print:hidden">
+        <div className="page-header !pb-3 !mb-3 flex items-center justify-between print:hidden">
           <div>
-            <h1 className="text-lg font-semibold">Perfiles Sociodemográficos</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <h1 className="page-title">Perfiles Sociodemográficos</h1>
+            <p className="page-subtitle">
               {empresa?.nombre} · {total} trabajadores activos
               {withPerfil < total && (
-                <span className="ml-2 text-amber-600">· {perfilPct}% con perfil completo</span>
+                <span className="ml-2 text-[#D97706]">· {perfilPct}% con perfil completo</span>
               )}
             </p>
           </div>

@@ -188,13 +188,13 @@ export default function Accidentalidad() {
     <AppLayout breadcrumbs={["SSTLink", "Accidentalidad"]}>
       <div className="space-y-4 max-w-6xl">
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="page-header !pb-3 !mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-semibold flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
+            <h1 className="page-title flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-[#DC2626]" />
               Accidentalidad
             </h1>
-            <p className="text-sm text-muted-foreground">Registro de accidentes e incidentes de trabajo</p>
+            <p className="page-subtitle">Registro de accidentes e incidentes de trabajo</p>
           </div>
           <Button size="sm" onClick={openCreate}>
             <Plus className="mr-1.5 h-4 w-4" />Registrar accidente
