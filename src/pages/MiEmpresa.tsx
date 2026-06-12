@@ -301,12 +301,14 @@ export default function MiEmpresa() {
 
   const deleteDoc = async () => {
     if (!deleteDocId) return;
+    setDeletingDoc(true);
     const doc = docs.find(d => d.id === deleteDocId);
     if (doc?.url) {
       const parts = doc.url.split("/documentos/");
       if (parts[1]) await supabase.storage.from("documentos").remove([parts[1]]);
     }
     await supabase.from("documentos_empresa").delete().eq("id", deleteDocId);
+    setDeletingDoc(false);
     setDeleteDocId(null);
     fetchDocs();
     toast({ title: "Documento eliminado" });
@@ -337,8 +339,10 @@ export default function MiEmpresa() {
 
   const handleRemoveUser = async () => {
     if (!removingUserId) return;
+    setRemovingUser(true);
     await supabase.from("usuarios").update({ empresa_id: null }).eq("id", removingUserId);
     setEquipo(prev => prev.filter(u => u.id !== removingUserId));
+    setRemovingUser(false);
     setRemovingUserId(null);
     toast({ title: "Usuario eliminado del equipo" });
   };
