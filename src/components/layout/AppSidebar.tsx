@@ -209,24 +209,23 @@ export function AppSidebar() {
         aria-label={locked ? `${item.title} (bloqueado)` : item.title}
         aria-disabled={locked || undefined}
         className={cn(
-          "group relative flex items-center rounded-lg",
-          "transition-all duration-200 ease-out",
+          "group relative flex items-center rounded-md",
+          "transition-colors duration-150 ease-out",
           focusRing,
           expanded
-            ? "w-[calc(100%-1rem)] h-9 px-2.5 gap-2.5 mx-2 active:scale-[0.99]"
-            : "w-10 h-10 justify-center hover:scale-125 hover:-translate-y-0.5 active:scale-110",
+            ? "w-[calc(100%-1rem)] h-9 px-2.5 gap-2.5 mx-2"
+            : "w-10 h-10 justify-center",
+          // Left orange accent bar on active
+          isActive && expanded && "border-l-[3px] border-l-[#F97316] pl-[calc(0.625rem-3px)]",
           locked
-            ? "text-muted-foreground/60 hover:bg-background/60 cursor-not-allowed"
+            ? "text-white/40 hover:bg-[#1E293B]/60 cursor-not-allowed"
             : isActive
-            ? "bg-accent text-accent-foreground shadow-sm"
-            : "text-hint hover:bg-background hover:text-foreground"
+            ? "bg-[#1E293B] text-white"
+            : "text-white/70 hover:bg-[#1E293B] hover:text-white"
         )}
       >
         <item.icon
-          className={cn(
-            "shrink-0 transition-transform duration-200",
-            expanded ? "w-[18px] h-[18px]" : "w-[18px] h-[18px] group-hover:scale-110"
-          )}
+          className="shrink-0 w-[18px] h-[18px]"
           style={item.color ? { color: item.color } : undefined}
           aria-hidden="true"
         />
@@ -234,18 +233,18 @@ export function AppSidebar() {
           <span className="text-[13px] truncate flex-1">{item.title}</span>
         )}
         {locked && expanded && (
-          <Lock className="w-3 h-3 shrink-0 text-muted-foreground/70" aria-hidden="true" />
+          <Lock className="w-3 h-3 shrink-0 text-white/40" aria-hidden="true" />
         )}
         {locked && !expanded && (
-          <Lock className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 text-muted-foreground/70 bg-surface rounded-full p-px" aria-hidden="true" />
+          <Lock className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 text-white/60 bg-[#0F172A] rounded-full p-px" aria-hidden="true" />
         )}
 
         {item.badgeCount && item.badgeCount > 0 ? (
           <>
             <span
               className={cn(
-                "absolute min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground",
-                "text-[9px] font-medium flex items-center justify-center leading-none",
+                "absolute min-w-[16px] h-4 px-1 rounded-full bg-[#F97316] text-white",
+                "text-[9px] font-semibold flex items-center justify-center leading-none",
                 expanded ? "top-1.5 right-2" : "-top-0.5 -right-0.5"
               )}
               aria-hidden="true"
@@ -258,7 +257,7 @@ export function AppSidebar() {
           <>
             <span
               className={cn(
-                "absolute w-1.5 h-1.5 rounded-full bg-destructive",
+                "absolute w-1.5 h-1.5 rounded-full bg-[#F97316]",
                 expanded ? "top-2 right-2.5" : "top-1.5 right-1.5"
               )}
               aria-hidden="true"
@@ -269,13 +268,12 @@ export function AppSidebar() {
       </NavLink>
     );
 
-    // En modo expandido, los labels son visibles → no necesitamos tooltip
     if (expanded) return <div key={item.url} className="w-full">{link}</div>;
 
     return (
       <Tooltip key={item.url}>
         <TooltipTrigger asChild>{link}</TooltipTrigger>
-        <TooltipContent side="right" className="bg-foreground text-background text-[11px]">
+        <TooltipContent side="right" className="bg-[#0F172A] text-white text-[11px] border-[#1E293B]">
           {item.title}
         </TooltipContent>
       </Tooltip>
@@ -300,10 +298,9 @@ export function AppSidebar() {
         aria-label={`${cat.title}, ${open ? "contraer" : "expandir"} categoría`}
         className={cn(
           "group flex items-center rounded-md relative",
-          "transition-all duration-200 ease-out",
-          "text-hint/70 hover:text-foreground hover:bg-background",
+          "transition-colors duration-150 ease-out",
+          "text-[#64748B] hover:text-white",
           focusRing,
-          hasActive && "text-foreground",
           expanded
             ? "w-[calc(100%-1rem)] h-7 px-2.5 gap-2 mx-2 justify-between"
             : "w-10 h-7 justify-center"
@@ -312,7 +309,7 @@ export function AppSidebar() {
         <span className="flex items-center gap-2 min-w-0">
           <cat.icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
           {expanded && (
-            <span className="text-[11px] uppercase tracking-wide truncate">
+            <span className="text-[11px] uppercase tracking-[0.12em] font-semibold truncate">
               {cat.title}
             </span>
           )}
@@ -340,7 +337,7 @@ export function AppSidebar() {
         ) : (
           <Tooltip>
             <TooltipTrigger asChild>{headerBtn}</TooltipTrigger>
-            <TooltipContent side="right" className="bg-foreground text-background text-[11px]">
+            <TooltipContent side="right" className="bg-[#0F172A] text-white text-[11px] border-[#1E293B]">
               {cat.title}
             </TooltipContent>
           </Tooltip>
@@ -363,7 +360,7 @@ export function AppSidebar() {
 
         {/* Separador sutil */}
         <div
-          className={cn("h-px bg-border/60 my-2", expanded ? "w-[calc(100%-1.5rem)] mx-3" : "w-6")}
+          className={cn("h-px bg-white/5 my-2", expanded ? "w-[calc(100%-1.5rem)] mx-3" : "w-6")}
           aria-hidden="true"
         />
       </div>
@@ -375,7 +372,7 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col bg-surface border-r-[0.5px] border-border py-4 shrink-0 overflow-y-auto",
+        "hidden md:flex flex-col bg-[#0F172A] text-white py-4 shrink-0 overflow-y-auto",
         "transition-[width] duration-300 ease-out",
         expanded ? "w-[220px] items-stretch" : "w-16 items-center"
       )}
@@ -385,7 +382,7 @@ export function AppSidebar() {
         href="#main-content"
         className={cn(
           "sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50",
-          "focus:bg-foreground focus:text-background focus:px-2 focus:py-1 focus:rounded"
+          "focus:bg-white focus:text-[#0F172A] focus:px-2 focus:py-1 focus:rounded"
         )}
       >
         Saltar al contenido
@@ -399,9 +396,13 @@ export function AppSidebar() {
         )}
       >
         <div className={cn("flex items-center gap-2", expanded && "min-w-0")}>
-          <img src={logoSstlink} alt="SSTLink" className="w-9 h-9 object-contain shrink-0" />
+          <div className="w-9 h-9 rounded-lg bg-[#F97316] flex items-center justify-center shrink-0">
+            <img src={logoSstlink} alt="SSTLink" className="w-7 h-7 object-contain" />
+          </div>
           {expanded && (
-            <span className="text-[14px] font-medium text-foreground truncate">SSTLink</span>
+            <span className="text-[14px] font-semibold text-white truncate">
+              SST<span className="text-[#F97316]">Link</span>
+            </span>
           )}
         </div>
         <Tooltip>
@@ -413,15 +414,15 @@ export function AppSidebar() {
               aria-pressed={expanded}
               className={cn(
                 "w-7 h-7 flex items-center justify-center rounded-md",
-                "text-hint hover:text-foreground hover:bg-background",
-                "transition-colors duration-200",
+                "text-white/60 hover:text-white hover:bg-[#1E293B]",
+                "transition-colors duration-150",
                 focusRing
               )}
             >
               <ToggleIcon className="w-4 h-4" aria-hidden="true" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right" className="bg-foreground text-background text-[11px]">
+          <TooltipContent side="right" className="bg-[#0F172A] text-white text-[11px] border-[#1E293B]">
             {expanded ? "Contraer" : "Expandir"}
           </TooltipContent>
         </Tooltip>

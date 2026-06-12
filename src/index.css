@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,93 +6,112 @@
 
 @layer base {
   :root {
-    --background: 220 14% 97%;
-    --foreground: 220 43% 11%;
+    /* Surfaces */
+    --background: 210 40% 98%;        /* #F8FAFC */
+    --foreground: 222 84% 5%;          /* #020617 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 43% 11%;
+    --card: 0 0% 100%;                 /* #FFFFFF */
+    --card-foreground: 222 84% 5%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 43% 11%;
+    --popover-foreground: 222 84% 5%;
 
-    --primary: 20 100% 59%;
+    /* Primary = CTA Orange #F97316 (used by shadcn Button default) */
+    --primary: 21 94% 53%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 142 72% 29%;
+    /* Secondary = Slate #334155 */
+    --secondary: 215 25% 27%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 14% 97%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted = light gray */
+    --muted: 210 40% 96%;              /* #F1F5F9 */
+    --muted-foreground: 215 16% 47%;   /* #64748B */
 
-    --accent: 20 100% 95%;
-    --accent-foreground: 20 100% 59%;
+    /* Accent = soft orange tint for hover/highlights */
+    --accent: 27 100% 96%;             /* #FFF1E6 */
+    --accent-foreground: 21 94% 45%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 74% 50%;          /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 20 100% 59%;
+    --border: 214 32% 91%;             /* #E2E8F0 */
+    --input: 214 32% 91%;
+    --ring: 21 94% 53%;
 
     --radius: 0.5rem;
 
-    --hint: 220 9% 64%;
+    --hint: 215 16% 47%;
 
     --surface: 0 0% 100%;
-    --surface-dark: 222 60% 7%;
+    --surface-dark: 222 47% 11%;       /* #0F172A */
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 43% 11%;
-    --sidebar-primary: 20 100% 59%;
+    /* Status palette */
+    --success: 142 71% 36%;            /* #16A34A */
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;             /* #F59E0B */
+    --warning-foreground: 0 0% 100%;
+    --navy: 222 47% 11%;               /* #0F172A */
+
+    /* Sidebar: dark navy */
+    --sidebar-background: 222 47% 11%; /* #0F172A */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 21 94% 53%;     /* orange accent */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 20 100% 95%;
-    --sidebar-accent-foreground: 20 100% 59%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 20 100% 59%;
+    --sidebar-accent: 217 33% 17%;     /* #1E293B */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 21 94% 53%;
   }
 
   .dark {
-    --background: 222 60% 7%;
+    --background: 222 47% 11%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 11%;
+    --card: 217 33% 17%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 11%;
+    --popover: 217 33% 17%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 20 100% 59%;
+    --primary: 21 94% 53%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 142 72% 29%;
+    --secondary: 215 25% 27%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 20 100% 15%;
-    --accent-foreground: 20 100% 59%;
+    --accent: 21 94% 18%;
+    --accent-foreground: 21 94% 70%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 74% 50%;
+    --destructive-foreground: 0 0% 100%;
 
     --border: 217 33% 17%;
     --input: 217 33% 17%;
-    --ring: 20 100% 59%;
+    --ring: 21 94% 53%;
 
-    --hint: 215 20% 50%;
+    --hint: 215 20% 65%;
 
-    --surface: 222 47% 11%;
-    --surface-dark: 222 60% 4%;
+    --surface: 217 33% 17%;
+    --surface-dark: 222 47% 5%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 100%;
+    --navy: 210 40% 98%;
 
     --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 20 100% 59%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 21 94% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 20 100% 15%;
-    --sidebar-accent-foreground: 20 100% 59%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 20 100% 59%;
+    --sidebar-ring: 21 94% 53%;
   }
 }
 
@@ -103,6 +122,37 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    color: hsl(var(--navy));
+  }
+}
+
+/* Status badge utilities (semantic, reusable) */
+@layer components {
+  .badge-success { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#DCFCE7] text-[#16A34A]; }
+  .badge-danger  { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#FEE2E2] text-[#DC2626]; }
+  .badge-warning { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#FEF3C7] text-[#D97706]; }
+  .badge-info    { @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#DBEAFE] text-[#1D4ED8]; }
+
+  /* Page header */
+  .page-header { @apply pb-4 mb-6 border-b border-[hsl(var(--border))]; }
+  .page-title  { @apply text-[24px] font-bold text-[hsl(var(--navy))] leading-tight; }
+  .page-subtitle { @apply text-sm text-[hsl(var(--muted-foreground))] mt-1; }
+
+  /* KPI card */
+  .kpi-card  { @apply bg-white border border-[hsl(var(--border))] rounded-lg p-5; }
+  .kpi-value { @apply text-[36px] font-bold text-[hsl(var(--navy))] leading-none tracking-tight; }
+  .kpi-label { @apply text-[13px] uppercase tracking-[0.05em] text-[hsl(var(--muted-foreground))] font-medium; }
+
+  /* Table */
+  .data-table { @apply w-full text-sm; }
+  .data-table thead th { @apply bg-[#F1F5F9] text-[#334155] font-semibold text-xs uppercase tracking-wide text-left px-4 py-2.5 border-b border-[hsl(var(--border))]; }
+  .data-table tbody td { @apply px-4 py-3 border-b border-[hsl(var(--border))]; }
+  .data-table tbody tr { @apply bg-white transition-colors duration-150 hover:bg-[#F1F5F9]; }
+  .data-table tbody tr:nth-child(even) { @apply bg-[#F8FAFC]; }
+  .data-table tbody tr:nth-child(even):hover { @apply bg-[#F1F5F9]; }
 }
