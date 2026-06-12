@@ -145,7 +145,6 @@ export default function MiEmpresa() {
   const [savingDoc, setSavingDoc] = useState(false);
   const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
   const [deletingDoc, setDeletingDoc] = useState(false);
-  const [deletingDoc, setDeletingDoc] = useState(false);
   const [docForm, setDocForm] = useState({ nombre: "", tipo: "", tieneVenc: false, fechaVenc: "" });
   const docFileRef = useRef<HTMLInputElement>(null);
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -160,7 +159,6 @@ export default function MiEmpresa() {
   const [generatedLink, setGeneratedLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
-  const [removingUser, setRemovingUser] = useState(false);
   const [removingUser, setRemovingUser] = useState(false);
 
   // Solicitudes de enlace
