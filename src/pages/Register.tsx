@@ -700,6 +700,12 @@ export default function Register() {
             </div>
           )}
 
+          {step === 3 && (
+            <div className="mt-5">
+              <PrivacyConsent checked={acceptedPrivacy} onChange={setAcceptedPrivacy} />
+            </div>
+          )}
+
           {/* Navigation buttons */}
           <div className="flex gap-3 mt-6">
             {step > 0 && (
@@ -712,7 +718,7 @@ export default function Register() {
                 Siguiente
               </Button>
             ) : (
-              <Button onClick={handleFinish} disabled={loading} className="flex-1">
+              <Button onClick={handleFinish} disabled={loading || !acceptedPrivacy} className="flex-1">
                 {loading ? "Creando cuenta..." : "Crear cuenta"}
               </Button>
             )}
@@ -727,5 +733,36 @@ export default function Register() {
         </p>
       </div>
     </div>
+  );
+}
+
+function PrivacyConsent({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex items-start gap-2 text-[11px] text-muted-foreground cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 h-3.5 w-3.5 rounded border-border accent-[#F97316] cursor-pointer"
+        aria-required="true"
+      />
+      <span>
+        Acepto la{" "}
+        <Link
+          to="/privacidad"
+          target="_blank"
+          className="text-[#F97316] font-medium hover:underline"
+        >
+          Política de Tratamiento de Datos Personales
+        </Link>{" "}
+        de SSTLink, conforme a la Ley 1581 de 2012.
+      </span>
+    </label>
   );
 }
