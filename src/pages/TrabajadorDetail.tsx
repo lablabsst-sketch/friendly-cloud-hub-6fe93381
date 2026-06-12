@@ -15,10 +15,7 @@ import { ExamenMedicoModal, type ExamenMedicoRecord } from "@/components/trabaja
 import { useAuth } from "@/contexts/AuthContext";
 import { canViewAll, canEdit, canAdmin } from "@/lib/roles";
 import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
