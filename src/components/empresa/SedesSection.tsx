@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { MapPin, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { canEdit } from "@/lib/roles";
@@ -30,7 +30,8 @@ export function SedesSection({ rol }: Props) {
   const [editing, setEditing] = useState<Sede | null>(null);
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const allowEdit = canEdit(rol);
 
@@ -79,11 +80,13 @@ export function SedesSection({ rol }: Props) {
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
-    const { error } = await (supabase as any).from("sedes").delete().eq("id", deleteId);
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await (supabase as any).from("sedes").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
     if (error) { toast.error("No se pudo eliminar"); return; }
     toast.success("Sede eliminada");
-    setDeleteId(null);
+    setDeleteTarget(null);
     fetchSedes();
   };
 
@@ -122,7 +125,7 @@ export function SedesSection({ rol }: Props) {
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(s)}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(s.id)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: s.id, nombre: s.nombre })}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -165,18 +168,14 @@ export function SedesSection({ rol }: Props) {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deleteId} onOpenChange={o => !o && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar sede?</AlertDialogTitle>
-            <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        itemName={deleteTarget?.nombre ?? "esta sede"}
+        onConfirm={handleDelete}
+        loading={deleting}
+        title="¿Eliminar sede?"
+      />
     </div>
   );
 }
