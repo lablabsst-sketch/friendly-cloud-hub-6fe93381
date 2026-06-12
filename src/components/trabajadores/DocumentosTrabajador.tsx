@@ -41,6 +41,7 @@ interface Documento {
 interface Props {
   trabajadorId: string;
   trabajadorNombre: string;
+  canEdit?: boolean;
 }
 
 function EstadoBadge({ fechaVencimiento }: { fechaVencimiento: string | null }) {
@@ -51,7 +52,7 @@ function EstadoBadge({ fechaVencimiento }: { fechaVencimiento: string | null }) 
   return <Badge variant="outline" className="text-[10px] h-5 bg-emerald-50 text-emerald-700 border-emerald-200 gap-1"><CheckCircle2 className="w-2.5 h-2.5" />Vigente</Badge>;
 }
 
-export function DocumentosTrabajador({ trabajadorId, trabajadorNombre }: Props) {
+export function DocumentosTrabajador({ trabajadorId, trabajadorNombre, canEdit = true }: Props) {
   const { empresa } = useAuth();
   const { toast } = useToast();
   const [documentos, setDocumentos] = useState<Documento[]>([]);
@@ -178,7 +179,7 @@ export function DocumentosTrabajador({ trabajadorId, trabajadorNombre }: Props) 
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              {tipo.requiereVencimiento && !docVigente && (
+              {canEdit && tipo.requiereVencimiento && !docVigente && (
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm" className="h-7 text-[10px] px-2 gap-1">
@@ -199,18 +200,22 @@ export function DocumentosTrabajador({ trabajadorId, trabajadorNombre }: Props) 
                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleDownload(docVigente.url ?? "", tipo.key)}>
                     <Download className="w-3.5 h-3.5 text-muted-foreground" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleDelete(docVigente)}>
-                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                  </Button>
+                  {canEdit && (
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleDelete(docVigente)}>
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  )}
                 </>
               )}
 
-              <Button variant={docVigente ? "outline" : "default"} size="sm"
-                className="h-7 text-[10px] px-2.5 gap-1" disabled={isUploading}
-                onClick={() => triggerUpload(tipo.key)}>
-                {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-                {docVigente ? "Actualizar" : "Subir"}
-              </Button>
+              {canEdit && (
+                <Button variant={docVigente ? "outline" : "default"} size="sm"
+                  className="h-7 text-[10px] px-2.5 gap-1" disabled={isUploading}
+                  onClick={() => triggerUpload(tipo.key)}>
+                  {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                  {docVigente ? "Actualizar" : "Subir"}
+                </Button>
+              )}
             </div>
           </div>
         );
