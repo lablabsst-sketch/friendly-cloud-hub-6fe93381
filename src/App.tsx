@@ -27,6 +27,7 @@ import MiEmpresa from "./pages/MiEmpresa.tsx";
 import Inspecciones from "./pages/Inspecciones.tsx";
 import Estadisticas from "./pages/Estadisticas.tsx";
 import Proveedores from "./pages/Proveedores.tsx";
+import Contratistas from "./pages/Contratistas.tsx";
 import Planes from "./pages/Planes.tsx";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Clientes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/contratistas"
+              element={
+                <ProtectedRoute>
+                  <Contratistas />
                 </ProtectedRoute>
               }
             />
