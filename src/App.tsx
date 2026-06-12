@@ -30,6 +30,7 @@ import Proveedores from "./pages/Proveedores.tsx";
 import Contratistas from "./pages/Contratistas.tsx";
 import Planes from "./pages/Planes.tsx";
 import PortalProveedor from "./pages/PortalProveedor.tsx";
+import Privacidad from "./pages/Privacidad.tsx";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/privacidad" element={<Privacidad />} />
             <Route path="/auth" element={<Navigate to="/login" replace />} />
             <Route
               path="/dashboard"
