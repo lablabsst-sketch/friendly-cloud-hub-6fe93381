@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { CheckCircle2, Circle, X, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmpresaPlan } from "@/hooks/useEmpresaPlan";
 
 const STORAGE_KEY = "sstlink:onboarding:dismissed";
 
@@ -15,6 +16,7 @@ interface Step {
 
 export function OnboardingChecklist() {
   const { empresa } = useAuth();
+  const plan = useEmpresaPlan();
   const [dismissed, setDismissed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(STORAGE_KEY) === "1";
@@ -47,8 +49,7 @@ export function OnboardingChecklist() {
 
   if (dismissed || !empresa) return null;
 
-  const plan = (empresa as any).plan;
-  const isFreePlan = !plan || plan === "free";
+  const isFreePlan = plan === "free";
   if (!isFreePlan) return null;
   if (trabajadoresCount === null) return null;
   if (trabajadoresCount > 0) return null;
