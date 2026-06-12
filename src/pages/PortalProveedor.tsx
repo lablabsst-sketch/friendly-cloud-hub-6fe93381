@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Building2, FileText, Upload, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
-import AppLayout from "@/components/layout/AppLayout";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 interface Vinculo {
   id: string;
@@ -27,7 +27,8 @@ interface DocEmpresa {
 }
 
 export default function PortalProveedor() {
-  const { empresaId } = useAuth();
+  const { usuario } = useAuth();
+  const empresaId = usuario?.empresa_id ?? null;
   const [loading, setLoading] = useState(true);
   const [vinculos, setVinculos] = useState<Vinculo[]>([]);
   const [docs, setDocs] = useState<DocEmpresa[]>([]);
