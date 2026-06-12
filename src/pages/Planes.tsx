@@ -10,19 +10,22 @@ import { normalizePlan, type PlanName } from "@/lib/planLimits";
 interface PlanRow {
   key: PlanName;
   name: string;
-  price: string;
+  priceMonthly: number; // COP/mes
   desc: string;
   highlighted?: boolean;
   badge?: string;
 }
 
 const PLANS: PlanRow[] = [
-  { key: "free",        name: "Free",        price: "$0",       desc: "Para empezar a digitalizar tu SST" },
-  { key: "pyme",        name: "Pyme",        price: "$22.000",  desc: "Para pequeñas empresas en crecimiento" },
-  { key: "empresarial", name: "Empresarial", price: "$44.000",  desc: "El más elegido por equipos SST", highlighted: true, badge: "Más popular" },
-  { key: "corporativo", name: "Corporativo", price: "$132.000", desc: "Para empresas medianas y grandes" },
-  { key: "premium",     name: "Premium",     price: "$198.000", desc: "Cobertura total y soporte premium" },
+  { key: "free",        name: "Free",        priceMonthly: 0,      desc: "Para empezar a digitalizar tu SST" },
+  { key: "pyme",        name: "Pyme",        priceMonthly: 22000,  desc: "Para pequeñas empresas en crecimiento" },
+  { key: "empresarial", name: "Empresarial", priceMonthly: 44000,  desc: "El más elegido por equipos SST", highlighted: true, badge: "Más popular" },
+  { key: "corporativo", name: "Corporativo", priceMonthly: 132000, desc: "Para empresas medianas y grandes" },
+  { key: "premium",     name: "Premium",     priceMonthly: 198000, desc: "Cobertura total y soporte premium" },
 ];
+
+const ANNUAL_DISCOUNT = 0.2; // 20% de descuento anual
+const fmtCOP = (n: number) => `$${n.toLocaleString("es-CO")}`;
 
 // columnas: free, pyme, empresarial, corporativo, premium
 type Cell = string | boolean | "locked";
@@ -70,18 +73,42 @@ export default function Planes() {
   const { empresa } = useAuth();
   const currentPlan = normalizePlan((empresa as any)?.plan);
   const [contactOpen, setContactOpen] = useState(false);
+  const [billing, setBilling] = useState<"mensual" | "anual">("mensual");
 
   return (
     <AppLayout>
       <TooltipProvider delayDuration={150}>
         <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
           {/* Header */}
-          <div className="space-y-1.5">
-            <h1 className="text-xl md:text-2xl font-semibold text-foreground">Planes y precios</h1>
-            <p className="text-sm text-muted-foreground">
-              Elige el plan que mejor se adapta a tu empresa. Tu plan actual es{" "}
-              <span className="font-medium text-foreground">{PLANS.find(p => p.key === currentPlan)?.name ?? "Free"}</span>.
-            </p>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <h1 className="text-xl md:text-2xl font-semibold text-foreground">Planes y precios</h1>
+              <p className="text-sm text-muted-foreground">
+                Elige el plan que mejor se adapta a tu empresa. Tu plan actual es{" "}
+                <span className="font-medium text-foreground">{PLANS.find(p => p.key === currentPlan)?.name ?? "Free"}</span>.
+              </p>
+            </div>
+
+            {/* Toggle mes / año */}
+            <div className="inline-flex items-center rounded-lg border border-border bg-muted/30 p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setBilling("mensual")}
+                aria-pressed={billing === "mensual"}
+                className={`px-3 h-7 rounded-md transition-colors ${billing === "mensual" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Mensual
+              </button>
+              <button
+                type="button"
+                onClick={() => setBilling("anual")}
+                aria-pressed={billing === "anual"}
+                className={`px-3 h-7 rounded-md transition-colors inline-flex items-center gap-1.5 ${billing === "anual" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Anual
+                <span className="text-[10px] text-emerald-600 font-medium">-{Math.round(ANNUAL_DISCOUNT * 100)}%</span>
+              </button>
+            </div>
           </div>
 
           {/* Pricing cards */}
@@ -89,6 +116,10 @@ export default function Planes() {
             {PLANS.map((plan) => {
               const isCurrent = plan.key === currentPlan;
               const isFree = plan.key === "free";
+              const monthlyShown = billing === "anual"
+                ? Math.round(plan.priceMonthly * (1 - ANNUAL_DISCOUNT))
+                : plan.priceMonthly;
+              const annualTotal = monthlyShown * 12;
               return (
                 <div
                   key={plan.key}
@@ -105,10 +136,19 @@ export default function Planes() {
                   )}
                   <h3 className="text-sm font-medium text-foreground">{plan.name}</h3>
                   <div className="mt-2 flex items-baseline gap-1">
-                    <span className="text-xl font-semibold text-foreground">{plan.price}</span>
+                    <span className="text-xl font-semibold text-foreground">{fmtCOP(monthlyShown)}</span>
                     {!isFree && <span className="text-[11px] text-muted-foreground">/mes</span>}
                   </div>
+                  {!isFree && billing === "anual" && (
+                    <p className="text-[10px] text-emerald-600 mt-0.5">
+                      {fmtCOP(annualTotal)} facturado anual
+                    </p>
+                  )}
+                  {!isFree && billing === "mensual" && (
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">Facturación mensual</p>
+                  )}
                   <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed min-h-[32px]">{plan.desc}</p>
+
 
                   <div className="mt-4">
                     {isCurrent ? (
