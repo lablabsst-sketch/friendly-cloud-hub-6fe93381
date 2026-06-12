@@ -55,6 +55,7 @@ const categories: NavCategory[] = [
       { title: "Trabajadores", url: "/trabajadores", icon: Users },
       { title: "Clientes", url: "/clientes", icon: UserCheck },
       { title: "Proveedores", url: "/proveedores", icon: Truck },
+      { title: "Contratistas", url: "/contratistas", icon: Building2 },
     ],
   },
   {
