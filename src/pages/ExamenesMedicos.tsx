@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Stethoscope, Plus, Pencil, Trash2, CheckCircle2, XCircle, Clock, Paperclip, Upload,
 } from "lucide-react";
+import { SensitiveDataNotice } from "@/components/SensitiveDataNotice";
 
 interface Trabajador { id: string; nombres: string; apellidos: string; cargo: string | null; }
 interface ExamenMedico {
@@ -215,6 +216,7 @@ export default function ExamenesMedicos() {
               Exámenes Médicos Ocupacionales
             </h1>
             <p className="page-subtitle">Control de aptitud laboral y próximos controles</p>
+            <SensitiveDataNotice className="mt-2 max-w-xl" />
           </div>
           <Button size="sm" onClick={openCreate}>
             <Plus className="mr-1.5 h-4 w-4" />Registrar examen
