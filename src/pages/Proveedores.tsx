@@ -10,10 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -97,7 +94,8 @@ export default function Proveedores() {
   const [editing, setEditing] = useState<Proveedor | null>(null);
   const [form, setForm] = useState<FormData>(blank);
   const [saving, setSaving] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Match state (NIT already registered in platform)
   const [matchEmpresa, setMatchEmpresa] = useState<{ id: string; nombre: string } | null>(null);
@@ -262,11 +260,13 @@ export default function Proveedores() {
 
   // ── Delete ───────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
-    if (!deleteId) return;
-    const { error } = await (supabase as any).from("proveedores").delete().eq("id", deleteId);
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await (supabase as any).from("proveedores").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
     if (error) toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
     else { toast({ title: "Proveedor eliminado" }); fetchProveedores(); }
-    setDeleteId(null);
+    setDeleteTarget(null);
   };
 
   // ── Invite ───────────────────────────────────────────────────────────────────
@@ -536,7 +536,7 @@ export default function Proveedores() {
                             <button onClick={() => openEdit(p)} className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={() => setDeleteId(p.id)} className="p-1.5 rounded-md hover:bg-red-50 transition-colors text-muted-foreground hover:text-red-600">
+                            <button onClick={() => setDeleteTarget({ id: p.id, nombre: p.nombre })} className="p-1.5 rounded-md hover:bg-red-50 transition-colors text-muted-foreground hover:text-red-600">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -738,19 +738,13 @@ export default function Proveedores() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Delete confirm ── */}
-      <AlertDialog open={!!deleteId} onOpenChange={v => { if (!v) setDeleteId(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar proveedor?</AlertDialogTitle>
-            <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        itemName={deleteTarget?.nombre ?? "este proveedor"}
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </AppLayout>
   );
 }

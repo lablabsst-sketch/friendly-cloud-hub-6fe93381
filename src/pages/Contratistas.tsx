@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { Truck, Plus, Pencil, Trash2, Users, Power } from "lucide-react";
 import { toast } from "sonner";
 import { canEdit, canAdmin } from "@/lib/roles";
@@ -38,7 +38,8 @@ export default function Contratistas() {
   const [editing, setEditing] = useState<Contratista | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [empleadosOf, setEmpleadosOf] = useState<{ id: string; nombre: string } | null>(null);
 
   const allowEdit = canEdit(rol);
@@ -114,11 +115,13 @@ export default function Contratistas() {
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
-    const { error } = await (supabase as any).from("contratistas").delete().eq("id", deleteId);
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await (supabase as any).from("contratistas").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
     if (error) { toast.error("No se pudo eliminar (verifica empleados asociados)"); return; }
     toast.success("Contratista eliminado");
-    setDeleteId(null);
+    setDeleteTarget(null);
     fetchData();
   };
 
@@ -190,7 +193,7 @@ export default function Contratistas() {
                     </Button>
                   )}
                   {allowDelete && (
-                    <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => setDeleteId(c.id)}>
+                    <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => setDeleteTarget({ id: c.id, nombre: c.nombre })}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   )}
@@ -250,20 +253,13 @@ export default function Contratistas() {
         />
       )}
 
-      <AlertDialog open={!!deleteId} onOpenChange={o => !o && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar contratista?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Si el contratista tiene empleados registrados, primero debes eliminarlos.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        itemName={deleteTarget?.nombre ?? "este contratista"}
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </AppLayout>
   );
 }

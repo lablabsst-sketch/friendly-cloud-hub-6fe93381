@@ -15,10 +15,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   Building2, Pencil, Save, X, Upload, Users, ShieldCheck,
@@ -147,6 +144,7 @@ export default function MiEmpresa() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [savingDoc, setSavingDoc] = useState(false);
   const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
+  const [deletingDoc, setDeletingDoc] = useState(false);
   const [docForm, setDocForm] = useState({ nombre: "", tipo: "", tieneVenc: false, fechaVenc: "" });
   const docFileRef = useRef<HTMLInputElement>(null);
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -161,6 +159,7 @@ export default function MiEmpresa() {
   const [generatedLink, setGeneratedLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+  const [removingUser, setRemovingUser] = useState(false);
 
   // Solicitudes de enlace
   const [solicitudes, setSolicitudes] = useState<SolicitudEnlace[]>([]);
@@ -302,12 +301,14 @@ export default function MiEmpresa() {
 
   const deleteDoc = async () => {
     if (!deleteDocId) return;
+    setDeletingDoc(true);
     const doc = docs.find(d => d.id === deleteDocId);
     if (doc?.url) {
       const parts = doc.url.split("/documentos/");
       if (parts[1]) await supabase.storage.from("documentos").remove([parts[1]]);
     }
     await supabase.from("documentos_empresa").delete().eq("id", deleteDocId);
+    setDeletingDoc(false);
     setDeleteDocId(null);
     fetchDocs();
     toast({ title: "Documento eliminado" });
@@ -338,8 +339,10 @@ export default function MiEmpresa() {
 
   const handleRemoveUser = async () => {
     if (!removingUserId) return;
+    setRemovingUser(true);
     await supabase.from("usuarios").update({ empresa_id: null }).eq("id", removingUserId);
     setEquipo(prev => prev.filter(u => u.id !== removingUserId));
+    setRemovingUser(false);
     setRemovingUserId(null);
     toast({ title: "Usuario eliminado del equipo" });
   };
@@ -1034,33 +1037,26 @@ export default function MiEmpresa() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Remove user confirm ── */}
-      <AlertDialog open={!!removingUserId} onOpenChange={open => !open && setRemovingUserId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar usuario del equipo?</AlertDialogTitle>
-            <AlertDialogDescription>El usuario perderá acceso a la plataforma pero su cuenta se mantiene.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveUser} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!removingUserId}
+        onOpenChange={(o) => !o && setRemovingUserId(null)}
+        itemName={(() => {
+          const u = equipo.find(x => x.id === removingUserId);
+          return u?.nombre_completo ?? u?.email ?? "este usuario";
+        })()}
+        onConfirm={handleRemoveUser}
+        loading={removingUser}
+        title="¿Eliminar usuario del equipo?"
+      />
 
-      {/* ── Delete doc confirm ── */}
-      <AlertDialog open={!!deleteDocId} onOpenChange={open => !open && setDeleteDocId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar documento?</AlertDialogTitle>
-            <AlertDialogDescription>Se eliminará el archivo. Esta acción no se puede deshacer.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteDoc} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!deleteDocId}
+        onOpenChange={(o) => !o && setDeleteDocId(null)}
+        itemName={docs.find(d => d.id === deleteDocId)?.nombre ?? "este documento"}
+        onConfirm={deleteDoc}
+        loading={deletingDoc}
+        title="¿Eliminar documento?"
+      />
     </AppLayout>
   );
 }

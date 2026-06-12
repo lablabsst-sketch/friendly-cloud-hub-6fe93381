@@ -19,10 +19,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -151,7 +148,8 @@ export default function PlanAnualPage() {
   const [editingActividad, setEditingActividad] = useState<Actividad | null>(null);
   const [formActividad, setFormActividad] = useState(blankActividad());
   const [saving, setSaving] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [planDialog, setPlanDialog] = useState(false);
   const [formPlan, setFormPlan] = useState({ titulo: "", objetivo: "", aprobado_por: "" });
 
@@ -345,10 +343,12 @@ export default function PlanAnualPage() {
 
   const deleteActividad = async () => {
     if (!deleteTarget) return;
+    setDeleting(true);
     const { error } = await (supabase as any)
       .from("actividades_plan_anual")
       .delete()
-      .eq("id", deleteTarget);
+      .eq("id", deleteTarget.id);
+    setDeleting(false);
     setDeleteTarget(null);
     if (error) {
       toast({ title: "Error al eliminar", variant: "destructive" });
@@ -540,7 +540,7 @@ export default function PlanAnualPage() {
                                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(a)}>
                                     <Pencil className="w-3.5 h-3.5" />
                                   </Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget(a.id)}>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: a.id, nombre: a.actividad })}>
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </Button>
                                 </div>
@@ -811,21 +811,14 @@ export default function PlanAnualPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Delete confirm ── */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={open => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar actividad?</AlertDialogTitle>
-            <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteActividad} className="bg-destructive hover:bg-destructive/90">
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        itemName={deleteTarget?.nombre ?? "esta actividad"}
+        onConfirm={deleteActividad}
+        loading={deleting}
+        title="¿Eliminar actividad?"
+      />
     </AppLayout>
   );
 }

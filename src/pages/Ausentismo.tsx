@@ -16,10 +16,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarOff, Plus, Pencil, Trash2, Clock, BarChart3, Users } from "lucide-react";
@@ -94,7 +91,8 @@ export default function Ausentismo() {
   const [editing, setEditing] = useState<Ausencia | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const workerMap = new Map(trabajadores.map((t) => [t.id, `${t.nombres} ${t.apellidos}`]));
 
@@ -176,10 +174,13 @@ export default function Ausentismo() {
   };
 
   const confirmDelete = async () => {
-    if (!deleteId) return;
-    await (supabase as any).from("ausencias").delete().eq("id", deleteId);
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await (supabase as any).from("ausencias").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Registro eliminado" });
-    setDeleteId(null);
+    setDeleteTarget(null);
     fetchAll();
   };
 
@@ -283,7 +284,7 @@ export default function Ausentismo() {
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(a)}><Pencil className="h-3.5 w-3.5" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(a.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTarget({ id: a.id, nombre: `ausencia ${TIPOS[a.tipo] ?? a.tipo}${workerMap.get(a.trabajador_id) ? ` de ${workerMap.get(a.trabajador_id)}` : ""}` })}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -356,19 +357,13 @@ export default function Ausentismo() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete */}
-      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar registro?</AlertDialogTitle>
-            <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        itemName={deleteTarget?.nombre ?? "este registro"}
+        onConfirm={confirmDelete}
+        loading={deleting}
+      />
     </AppLayout>
   );
 }

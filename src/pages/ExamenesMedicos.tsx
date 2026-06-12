@@ -17,10 +17,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -98,7 +95,8 @@ export default function ExamenesMedicos() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const handleUploadSoporte = async (file: File) => {
     if (!empresa?.id) return;
@@ -198,10 +196,13 @@ export default function ExamenesMedicos() {
   };
 
   const confirmDelete = async () => {
-    if (!deleteId) return;
-    await (supabase as any).from("examenes_medicos").delete().eq("id", deleteId);
-    toast({ title: "Registro eliminado" });
-    setDeleteId(null);
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await (supabase as any).from("examenes_medicos").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Examen eliminado" });
+    setDeleteTarget(null);
     fetchAll();
   };
 
@@ -320,7 +321,7 @@ export default function ExamenesMedicos() {
                               </a>
                             )}
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(e)}><Pencil className="h-3.5 w-3.5" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(e.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTarget({ id: e.id, nombre: `examen ${TIPOS[e.tipo] ?? e.tipo}${workerMap.get(e.trabajador_id) ? ` de ${workerMap.get(e.trabajador_id)}` : ""}` })}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -417,19 +418,13 @@ export default function ExamenesMedicos() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete */}
-      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar registro?</AlertDialogTitle>
-            <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        itemName={deleteTarget?.nombre ?? "este examen"}
+        onConfirm={confirmDelete}
+        loading={deleting}
+      />
     </AppLayout>
   );
 }

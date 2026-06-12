@@ -18,10 +18,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -290,7 +287,8 @@ export default function InspeccionesPage() {
   const [formAccion, setFormAccion] = useState(blankAccion());
 
   // ── Delete ───────────────────────────────────────────────────────────────
-  const [deleteTarget, setDeleteTarget] = useState<{ type: "inspeccion" | "elemento" | "accion" | "activo"; id: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "inspeccion" | "elemento" | "accion" | "activo"; id: string; nombre: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // ── Informe ──────────────────────────────────────────────────────────────
   const [informeOpen, setInformeOpen] = useState(false);
@@ -548,11 +546,15 @@ export default function InspeccionesPage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+    setDeleting(true);
     const table = { inspeccion: "inspecciones", elemento: "inspeccion_elementos", accion: "acciones_correctivas", activo: "activos" }[deleteTarget.type];
-    await (supabase as any).from(table).delete().eq("id", deleteTarget.id);
+    const { error } = await (supabase as any).from(table).delete().eq("id", deleteTarget.id);
+    setDeleting(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    const type = deleteTarget.type;
     setDeleteTarget(null);
-    if (deleteTarget.type === "inspeccion") { setDetalleOpen(false); fetchInspecciones(); }
-    else if (deleteTarget.type === "activo") { fetchActivos(); }
+    if (type === "inspeccion") { setDetalleOpen(false); fetchInspecciones(); }
+    else if (type === "activo") { fetchActivos(); }
     else if (inspeccionActual) { fetchDetalle(inspeccionActual); }
     toast({ title: "Eliminado correctamente" });
   };
@@ -770,7 +772,7 @@ export default function InspeccionesPage() {
                             <ChevronRight className="w-3.5 h-3.5" />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={() => setDeleteTarget({ type: "inspeccion", id: insp.id })}>
+                            onClick={() => setDeleteTarget({ type: "inspeccion", id: insp.id, nombre: `inspección ${insp.codigo}` })}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
@@ -895,7 +897,7 @@ export default function InspeccionesPage() {
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={() => setDeleteTarget({ type: "activo", id: activo.id })}>
+                            onClick={() => setDeleteTarget({ type: "activo", id: activo.id, nombre: activo.descripcion ?? "este activo" })}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
@@ -1248,7 +1250,7 @@ export default function InspeccionesPage() {
                                 <Pencil className="w-3.5 h-3.5" />
                               </Button>
                               <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
-                                onClick={() => setDeleteTarget({ type: "elemento", id: elem.id })}>
+                                onClick={() => setDeleteTarget({ type: "elemento", id: elem.id, nombre: `elemento ${elem.identificador}` })}>
                                 <Trash2 className="w-3.5 h-3.5" />
                               </Button>
                             </div>
@@ -1292,7 +1294,7 @@ export default function InspeccionesPage() {
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={() => setDeleteTarget({ type: "accion", id: acc.id })}>
+                            onClick={() => setDeleteTarget({ type: "accion", id: acc.id, nombre: acc.descripcion ?? "esta acción" })}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
@@ -1684,19 +1686,13 @@ export default function InspeccionesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Delete Confirm ── */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={open => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar?</AlertDialogTitle>
-            <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        itemName={deleteTarget?.nombre ?? "este registro"}
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
 
       <ImportarModal
         open={importOpen}
