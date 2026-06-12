@@ -226,7 +226,7 @@ export default function Estadisticas() {
   const conCargaPct = withPerfil > 0 ? Math.round((conCarga / withPerfil) * 100) : 0;
 
   if (loading) return (
-    <AppLayout breadcrumbs={["SSTLink", "Estadísticas"]}>
+    <AppLayout breadcrumbs={["SSTLink", "Perfiles Sociodemográficos"]}>
       <div className="space-y-4">
         <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-4 gap-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>
@@ -236,13 +236,13 @@ export default function Estadisticas() {
   );
 
   return (
-    <AppLayout breadcrumbs={["SSTLink", "Estadísticas"]}>
+    <AppLayout breadcrumbs={["SSTLink", "Perfiles Sociodemográficos"]}>
       <div ref={printRef} className="space-y-2 max-w-6xl print:max-w-none">
 
         {/* Header */}
         <div className="flex items-center justify-between print:hidden">
           <div>
-            <h1 className="text-lg font-semibold">Perfil Sociodemográfico</h1>
+            <h1 className="text-lg font-semibold">Perfiles Sociodemográficos</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               {empresa?.nombre} · {total} trabajadores activos
               {withPerfil < total && (

@@ -43,7 +43,7 @@ const FEATURES: FeatureRow[] = [
   { label: "Ausentismo",          values: ["locked", true, true, true, true] },
   { label: "Inspecciones",        values: ["locked", true, true, true, true] },
   { label: "Plan anual SGSST",    values: ["locked", true, true, true, true] },
-  { label: "Estadísticas",        values: ["locked", true, true, true, true] },
+  { label: "Perfiles Sociodemográficos", values: ["locked", true, true, true, true] },
 ];
 
 function CellRender({ value }: { value: Cell }) {
