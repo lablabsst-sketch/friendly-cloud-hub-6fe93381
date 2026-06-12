@@ -419,24 +419,20 @@ export default function Proveedores() {
 
         {/* Content */}
         {loading ? (
-          <div className="space-y-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>
+          <SkeletonRows rows={4} height="h-16" />
         ) : filtered.length === 0 && proveedores.length === 0 ? (
-          <div className="bg-card rounded-xl border p-12 flex flex-col items-center text-center">
-            <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center mb-4">
-              <Truck className="w-6 h-6 text-primary" />
-            </div>
-            <p className="text-sm font-medium mb-1">Sin proveedores registrados</p>
-            <p className="text-xs text-muted-foreground mb-4">Registra los proveedores y contratistas que trabajan con tu empresa.</p>
-            {puedeEditar && (
-              <Button onClick={openNew} disabled={provLimitReached} className="gap-1.5 text-xs h-9">
-                <Plus className="w-3.5 h-3.5" /> Agregar primer proveedor
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            icon={Truck}
+            title="Sin proveedores registrados"
+            description="Registra los proveedores y contratistas que trabajan con tu empresa."
+            action={puedeEditar ? { label: "Agregar primer proveedor", onClick: openNew, icon: Plus } : undefined}
+          />
         ) : filtered.length === 0 ? (
-          <div className="bg-card rounded-xl border p-8 text-center">
-            <p className="text-sm text-muted-foreground">No se encontraron proveedores con esos filtros.</p>
-          </div>
+          <EmptyState
+            icon={Truck}
+            title="Sin resultados"
+            description="No se encontraron proveedores con esos filtros."
+          />
         ) : (
           <div className="bg-card rounded-xl border overflow-hidden">
             <table className="w-full text-xs">

@@ -404,20 +404,21 @@ export default function PlanAnualPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-3">
-          {[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full" />)}
-        </div>
+        <SkeletonRows rows={3} height="h-20" />
       ) : !plan ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <CalendarRange className="w-12 h-12 text-muted-foreground/40" />
-          <p className="text-muted-foreground">No hay plan anual para {anio}</p>
-          <Button onClick={() => {
-            setFormPlan({ titulo: `Plan Anual de Trabajo SG-SST ${anio}`, objetivo: "", aprobado_por: "" });
-            setPlanDialog(true);
-          }}>
-            <Plus className="w-4 h-4 mr-1.5" /> Crear Plan {anio}
-          </Button>
-        </div>
+        <EmptyState
+          icon={CalendarRange}
+          title={`No hay plan anual para ${anio}`}
+          description="Crea el plan anual del SG-SST y comienza a registrar actividades y tareas."
+          action={{
+            label: `Crear Plan ${anio}`,
+            onClick: () => {
+              setFormPlan({ titulo: `Plan Anual de Trabajo SG-SST ${anio}`, objetivo: "", aprobado_por: "" });
+              setPlanDialog(true);
+            },
+            icon: Plus,
+          }}
+        />
       ) : (
         <Tabs defaultValue="actividades">
           <TabsList className="mb-4 print:hidden">

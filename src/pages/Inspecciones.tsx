@@ -728,15 +728,14 @@ export default function InspeccionesPage() {
 
           {/* Table */}
           {loading ? (
-            <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
+            <SkeletonRows rows={3} height="h-12" />
           ) : inspeccionesFiltradas.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-4">
-              <ClipboardCheck className="w-12 h-12 text-muted-foreground/40" />
-              <p className="text-muted-foreground">Sin inspecciones registradas</p>
-              <Button size="sm" onClick={() => setNuevaOpen(true)}>
-                <Plus className="w-4 h-4 mr-1.5" /> Nueva Inspección
-              </Button>
-            </div>
+            <EmptyState
+              icon={ClipboardCheck}
+              title="Sin inspecciones registradas"
+              description="Programa inspecciones planeadas y registra hallazgos por área."
+              action={{ label: "Nueva Inspección", onClick: () => setNuevaOpen(true), icon: Plus }}
+            />
           ) : (
             <div className="rounded-lg border overflow-x-auto">
               <Table>

@@ -128,11 +128,14 @@ export default function Clientes() {
 
 
         {loading ? (
-          <div className="text-center text-muted-foreground py-12">Cargando…</div>
+          <SkeletonCards count={3} />
         ) : clientes.length === 0 ? (
-          <div className="text-center text-muted-foreground py-12">
-            No hay clientes registrados. Haz clic en "Agregar Cliente" para empezar.
-          </div>
+          <EmptyState
+            icon={Users}
+            title="No hay clientes registrados"
+            description="Agrega tus clientes para vincularles trabajadores y compartirles el portal."
+            action={!clienteLimitReached ? { label: "Agregar cliente", onClick: handleOpenAdd, icon: Plus } : undefined}
+          />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {clientes.map(c => (

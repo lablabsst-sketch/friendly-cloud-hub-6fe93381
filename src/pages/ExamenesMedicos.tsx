@@ -279,13 +279,14 @@ export default function ExamenesMedicos() {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <div className="p-6 space-y-3">{Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+              <div className="p-6"><SkeletonRows rows={4} height="h-10" /></div>
             ) : filtered.length === 0 ? (
-              <div className="py-16 text-center">
-                <Stethoscope className="mx-auto h-9 w-9 text-muted-foreground/30 mb-2" />
-                <p className="text-sm text-muted-foreground font-medium">No hay exámenes registrados</p>
-                <p className="text-xs text-muted-foreground">Haz clic en "Registrar examen" para comenzar.</p>
-              </div>
+              <EmptyState
+                icon={Stethoscope}
+                title="No hay exámenes registrados"
+                description="Lleva el control de aptitud laboral y próximos controles ocupacionales."
+                action={{ label: "Registrar examen", onClick: openCreate, icon: Plus }}
+              />
             ) : (
               <div className="overflow-x-auto">
                 <Table>

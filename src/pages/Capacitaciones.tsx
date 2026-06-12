@@ -657,13 +657,14 @@ export default function Capacitaciones() {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <div className="p-6 space-y-3">{Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+              <div className="p-6"><SkeletonRows rows={4} height="h-12" /></div>
             ) : filtered.length === 0 ? (
-              <div className="py-16 text-center">
-                <GraduationCap className="mx-auto h-9 w-9 text-muted-foreground/30 mb-2" />
-                <p className="text-sm text-muted-foreground font-medium">No hay capacitaciones registradas</p>
-                <p className="text-xs text-muted-foreground">Haz clic en "Nueva capacitación" para empezar.</p>
-              </div>
+              <EmptyState
+                icon={GraduationCap}
+                title="No hay capacitaciones registradas"
+                description="Programa inducción, reinducción y formación en SST para tu equipo."
+                action={{ label: "Nueva capacitación", onClick: openCreate, icon: Plus }}
+              />
             ) : (
               <div className="overflow-x-auto">
                 <Table>
