@@ -74,6 +74,7 @@ export default function TrabajadorDetail() {
   const [examenModalOpen, setExamenModalOpen] = useState(false);
   const [editingExamen, setEditingExamen] = useState<ExamenMedicoRecord | null>(null);
   const [deleteExamenId, setDeleteExamenId] = useState<string | null>(null);
+  const [deletingExamen, setDeletingExamen] = useState(false);
   const { toast } = useToast();
 
   const canSeePerfil = canViewAll(usuario?.rol);
@@ -517,29 +518,25 @@ export default function TrabajadorDetail() {
           />
         )}
 
-        <AlertDialog open={!!deleteExamenId} onOpenChange={(o) => !o && setDeleteExamenId(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>¿Eliminar examen médico?</AlertDialogTitle>
-              <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={async () => {
-                  if (!deleteExamenId) return;
-                  const { error } = await (supabase as any).from("examenes_medicos").delete().eq("id", deleteExamenId);
-                  if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-                  else { toast({ title: "Examen eliminado" }); fetchWorker(); }
-                  setDeleteExamenId(null);
-                }}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Eliminar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <ConfirmDeleteDialog
+          open={!!deleteExamenId}
+          onOpenChange={(o) => !o && setDeleteExamenId(null)}
+          itemName={(() => {
+            const ex = examenes.find(e => e.id === deleteExamenId);
+            return ex ? `examen ${ex.tipo} del ${ex.fecha}` : "este examen";
+          })()}
+          loading={deletingExamen}
+          title="¿Eliminar examen médico?"
+          onConfirm={async () => {
+            if (!deleteExamenId) return;
+            setDeletingExamen(true);
+            const { error } = await (supabase as any).from("examenes_medicos").delete().eq("id", deleteExamenId);
+            setDeletingExamen(false);
+            if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+            else { toast({ title: "Examen eliminado" }); fetchWorker(); }
+            setDeleteExamenId(null);
+          }}
+        />
       </div>
     </AppLayout>
   );
