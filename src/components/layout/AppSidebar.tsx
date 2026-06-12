@@ -65,6 +65,7 @@ const categories: NavCategory[] = [
       { title: "Accidentalidad", url: "/accidentalidad", icon: AlertTriangle },
       { title: "Ausentismo", url: "/ausentismo", icon: CalendarOff },
       { title: "Exámenes Médicos", url: "/examenes-medicos", icon: Stethoscope },
+      { title: "Perfiles Sociodemográficos", url: "/estadisticas", icon: BarChart3 },
     ],
   },
   {
@@ -74,7 +75,6 @@ const categories: NavCategory[] = [
     items: [
       { title: "Capacitaciones", url: "/capacitaciones", icon: GraduationCap },
       { title: "Inspecciones", url: "/inspecciones", icon: ClipboardCheck },
-      { title: "Estadísticas", url: "/estadisticas", icon: BarChart3 },
       { title: "Plan Anual", url: "/plan-anual", icon: CalendarRange },
     ],
   },
