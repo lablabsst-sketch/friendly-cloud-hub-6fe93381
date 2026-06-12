@@ -1033,33 +1033,26 @@ export default function MiEmpresa() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Remove user confirm ── */}
-      <AlertDialog open={!!removingUserId} onOpenChange={open => !open && setRemovingUserId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar usuario del equipo?</AlertDialogTitle>
-            <AlertDialogDescription>El usuario perderá acceso a la plataforma pero su cuenta se mantiene.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveUser} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!removingUserId}
+        onOpenChange={(o) => !o && setRemovingUserId(null)}
+        itemName={(() => {
+          const u = equipo.find(x => x.id === removingUserId);
+          return u?.nombre_completo ?? u?.email ?? "este usuario";
+        })()}
+        onConfirm={handleRemoveUser}
+        loading={removingUser}
+        title="¿Eliminar usuario del equipo?"
+      />
 
-      {/* ── Delete doc confirm ── */}
-      <AlertDialog open={!!deleteDocId} onOpenChange={open => !open && setDeleteDocId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar documento?</AlertDialogTitle>
-            <AlertDialogDescription>Se eliminará el archivo. Esta acción no se puede deshacer.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteDoc} className="bg-destructive hover:bg-destructive/90">Eliminar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!deleteDocId}
+        onOpenChange={(o) => !o && setDeleteDocId(null)}
+        itemName={docs.find(d => d.id === deleteDocId)?.nombre ?? "este documento"}
+        onConfirm={deleteDoc}
+        loading={deletingDoc}
+        title="¿Eliminar documento?"
+      />
     </AppLayout>
   );
 }
