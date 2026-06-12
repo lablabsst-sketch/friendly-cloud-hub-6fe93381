@@ -620,12 +620,12 @@ export default function InspeccionesPage() {
     <AppLayout breadcrumbs={["Inspecciones"]}>
 
       {/* ── Header dinámico ── */}
-      <div className="flex items-center justify-between mb-4 print:hidden">
+      <div className="page-header !pb-3 !mb-3 flex items-center justify-between print:hidden">
         <div>
-          <h1 className="text-xl font-semibold">
+          <h1 className="page-title">
             {mainTab === "inventario" ? "Inventario de Activos" : "Inspecciones SST"}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="page-subtitle">
             {mainTab === "inventario"
               ? "Registra tus activos para inspeccionarlos de forma ordenada"
               : "Gestión de inspecciones de seguridad"}

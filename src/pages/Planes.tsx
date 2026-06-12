@@ -80,12 +80,12 @@ export default function Planes() {
       <TooltipProvider delayDuration={150}>
         <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
           {/* Header */}
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <h1 className="text-xl md:text-2xl font-semibold text-foreground">Planes y precios</h1>
-              <p className="text-sm text-muted-foreground">
+          <div className="page-header !pb-3 !mb-3 space-y-3">
+            <div className="space-y-1">
+              <h1 className="page-title">Planes y precios</h1>
+              <p className="page-subtitle">
                 Elige el plan que mejor se adapta a tu empresa. Tu plan actual es{" "}
-                <span className="font-medium text-foreground">{PLANS.find(p => p.key === currentPlan)?.name ?? "Free"}</span>.
+                <span className="font-semibold text-[#0F172A]">{PLANS.find(p => p.key === currentPlan)?.name ?? "Free"}</span>.
               </p>
             </div>
 
@@ -185,12 +185,12 @@ export default function Planes() {
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-muted/40 text-left">
-                    <th className="px-4 py-2.5 text-xs font-medium text-muted-foreground w-1/3">Funcionalidad</th>
+                  <tr className="bg-[#F1F5F9] text-left border-b border-[#E2E8F0]">
+                    <th className="px-4 py-2.5 text-xs font-semibold text-[#334155] uppercase tracking-wide w-1/3">Funcionalidad</th>
                     {PLANS.map((p) => (
-                      <th key={p.key} className={`px-3 py-2.5 text-xs font-medium text-center ${p.key === currentPlan ? "text-primary" : "text-muted-foreground"}`}>
+                      <th key={p.key} className={`px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-center ${p.key === currentPlan ? "text-[#F97316]" : "text-[#334155]"}`}>
                         {p.name}
-                        {p.key === currentPlan && <span className="block text-[10px] text-primary/80 font-normal">Tu plan</span>}
+                        {p.key === currentPlan && <span className="block text-[10px] text-[#F97316]/80 font-normal normal-case tracking-normal">Tu plan</span>}
                       </th>
                     ))}
                   </tr>

@@ -187,13 +187,13 @@ export default function Ausentismo() {
     <AppLayout breadcrumbs={["SSTLink", "Ausentismo"]}>
       <div className="space-y-4 max-w-6xl">
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="page-header !pb-3 !mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-semibold flex items-center gap-2">
-              <CalendarOff className="h-5 w-5 text-orange-500" />
+            <h1 className="page-title flex items-center gap-2">
+              <CalendarOff className="h-5 w-5 text-[#F97316]" />
               Ausentismo
             </h1>
-            <p className="text-sm text-muted-foreground">Registro de ausencias y días perdidos por causa</p>
+            <p className="page-subtitle">Registro de ausencias y días perdidos por causa</p>
           </div>
           <Button size="sm" onClick={openCreate}>
             <Plus className="mr-1.5 h-4 w-4" />Registrar ausencia

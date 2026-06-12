@@ -377,10 +377,10 @@ export default function PlanAnualPage() {
   return (
     <AppLayout breadcrumbs={["Plan Anual"]}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 print:hidden">
+      <div className="page-header !pb-3 !mb-4 flex items-center justify-between print:hidden">
         <div>
-          <h1 className="text-xl font-semibold">Plan Anual de Trabajo</h1>
-          {plan && <p className="text-sm text-muted-foreground mt-0.5">{plan.titulo}</p>}
+          <h1 className="page-title">Plan Anual de Trabajo</h1>
+          {plan && <p className="page-subtitle">{plan.titulo}</p>}
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center border rounded-lg overflow-hidden">
