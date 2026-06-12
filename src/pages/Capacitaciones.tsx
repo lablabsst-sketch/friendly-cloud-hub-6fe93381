@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SkeletonRows } from "@/components/SkeletonRows";
 import { EmptyState } from "@/components/EmptyState";
 import { Separator } from "@/components/ui/separator";
