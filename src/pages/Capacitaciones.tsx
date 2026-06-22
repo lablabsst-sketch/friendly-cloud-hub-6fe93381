@@ -241,18 +241,20 @@ export default function Capacitaciones() {
     setLoading(true);
 
     const [{ data: cs }, { data: ts }, { data: ecs }] = await Promise.all([
-      (supabase as any)
-        .from("capacitaciones")
-        .select("*")
-        .eq("empresa_id", empresa.id)
-        .order("fecha", { ascending: false }),
+      runQuery<Capacitacion[]>(
+        supabase
+          .from("capacitaciones")
+          .select("*")
+          .eq("empresa_id", empresa.id)
+          .order("fecha", { ascending: false })
+      ),
       supabase
         .from("trabajadores")
         .select("id, nombres, apellidos, cargo, telefono, numero_documento")
         .eq("empresa_id", empresa.id)
         .neq("estado", "inactivo")
         .or("eliminado.is.null,eliminado.eq.false"),
-      (supabase as any)
+      supabase
         .from("empleados_contratista")
         .select("id, nombres, apellidos, cargo, numero_documento, contratista_id")
         .eq("empresa_id", empresa.id)
