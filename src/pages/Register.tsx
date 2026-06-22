@@ -274,35 +274,23 @@ export default function Register() {
       const authUserId = authData.user?.id;
       if (!authUserId) throw new Error("No se pudo crear la sesión.");
 
-      // Look up invitation (user now has a session)
-      const { data: inv, error: invErr } = await (supabase as any)
-        .from("invitaciones")
-        .select("empresa_id, rol")
-        .eq("token", invToken)
-        .eq("estado", "pendiente")
-        .single();
-      if (invErr || !inv) throw new Error("La invitación ya no es válida.");
-
+      // Asegurar perfil; el rol se asigna server-side vía RPC (no confiar en cliente)
       const [firstName, ...rest] = fullName.trim().split(" ").filter(Boolean);
       const apellido = rest.join(" ") || null;
 
-      const { error: uErr } = await supabase.from("usuarios").insert({
+      const { error: uErr } = await supabase.from("usuarios").upsert({
         user_id: authUserId,
         auth_user_id: authUserId,
-        empresa_id: inv.empresa_id,
         nombre: firstName || fullName.trim(),
         apellido,
         nombre_completo: fullName.trim(),
         email: email.trim().toLowerCase(),
-        rol: inv.rol,
-      });
+      }, { onConflict: "auth_user_id" });
       if (uErr) throw uErr;
 
-      await supabase.from("user_roles").insert({ user_id: authUserId, role: inv.rol });
-      await (supabase as any)
-        .from("invitaciones")
-        .update({ estado: "aceptada", accepted_at: new Date().toISOString() })
-        .eq("token", invToken);
+      const { error: rpcErr } = await (supabase as any).rpc("accept_invitation", { p_token: invToken });
+      if (rpcErr) throw new Error(rpcErr.message || "La invitación ya no es válida.");
+
 
       setSuccess(true);
     } catch (err: any) {
