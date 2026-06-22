@@ -368,11 +368,13 @@ export default function Capacitaciones() {
       const monthStart = new Date();
       monthStart.setDate(1);
       monthStart.setHours(0, 0, 0, 0);
-      const { count } = await (supabase as any)
-        .from("capacitaciones")
-        .select("id", { count: "exact", head: true })
-        .eq("empresa_id", empresa.id)
-        .gte("created_at", monthStart.toISOString());
+      const { count } = await runQuery<number>(
+        supabase
+          .from("capacitaciones")
+          .select("id", { count: "exact", head: true })
+          .eq("empresa_id", empresa.id)
+          .gte("created_at", monthStart.toISOString())
+      );
       if ((count ?? 0) >= 1) {
         toast({
           title: "Límite del Plan Free alcanzado",
