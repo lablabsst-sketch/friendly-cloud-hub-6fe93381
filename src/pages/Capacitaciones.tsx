@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -149,6 +150,31 @@ const emptyForm = {
   archivo_url: "",
 };
 
+// Helper to query tables whose generated types lag behind the real schema
+async function runQuery<T>(promise: PromiseLike<{ data: unknown; error: unknown }>): Promise<{ data: T | null; error: unknown }> {
+  const { data, error } = await promise;
+  return { data: data as T | null, error };
+}
+
+interface AsistenciaCapacitacionInsertPayload {
+  capacitacion_id: string;
+  empresa_id: string;
+  tipo_asistente: "trabajador" | "contratista";
+  trabajador_id: string | null;
+  empleado_contratista_id: string | null;
+  telefono_whatsapp: string | null;
+  asistio: boolean;
+}
+
+interface ExistingAsistencia {
+  tipo_asistente: "trabajador" | "contratista";
+  trabajador_id: string | null;
+  empleado_contratista_id: string | null;
+  telefono_whatsapp: string | null;
+}
+
+type AsistenciaCapacitacionUpdate = Database["public"]["Tables"]["asistencia_capacitacion"]["Update"];
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const getAttendeeName = (a: AsistenciaRecord): string => {
@@ -218,18 +244,20 @@ export default function Capacitaciones() {
     setLoading(true);
 
     const [{ data: cs }, { data: ts }, { data: ecs }] = await Promise.all([
-      (supabase as any)
-        .from("capacitaciones")
-        .select("*")
-        .eq("empresa_id", empresa.id)
-        .order("fecha", { ascending: false }),
+      runQuery<Capacitacion[]>(
+        supabase
+          .from("capacitaciones")
+          .select("*")
+          .eq("empresa_id", empresa.id)
+          .order("fecha", { ascending: false })
+      ),
       supabase
         .from("trabajadores")
         .select("id, nombres, apellidos, cargo, telefono, numero_documento")
         .eq("empresa_id", empresa.id)
         .neq("estado", "inactivo")
         .or("eliminado.is.null,eliminado.eq.false"),
-      (supabase as any)
+      supabase
         .from("empleados_contratista")
         .select("id, nombres, apellidos, cargo, numero_documento, contratista_id")
         .eq("empresa_id", empresa.id)
@@ -264,7 +292,7 @@ export default function Capacitaciones() {
   // ─── Build attendee entries for form ───────────────────────────────────────
 
   const buildAttendeeEntries = useCallback(
-    (existingAsistencias: AsistenciaRecord[] = []) => {
+    (existingAsistencias: ExistingAsistencia[] = []) => {
       const existingTrabMap = new Map(
         existingAsistencias.filter((a) => a.tipo_asistente === "trabajador").map((a) => [a.trabajador_id!, a])
       );
@@ -324,10 +352,12 @@ export default function Capacitaciones() {
     setSearchConvocatoria("");
 
     // Load existing attendees
-    const { data } = await (supabase as any)
-      .from("asistencia_capacitacion")
-      .select("tipo_asistente, trabajador_id, empleado_contratista_id, telefono_whatsapp")
-      .eq("capacitacion_id", c.id);
+    const { data } = await runQuery<ExistingAsistencia[]>(
+      supabase
+        .from("asistencia_capacitacion")
+        .select("tipo_asistente, trabajador_id, empleado_contratista_id, telefono_whatsapp")
+        .eq("capacitacion_id", c.id)
+    );
 
     buildAttendeeEntries(data ?? []);
     setFormOpen(true);
@@ -341,7 +371,7 @@ export default function Capacitaciones() {
       const monthStart = new Date();
       monthStart.setDate(1);
       monthStart.setHours(0, 0, 0, 0);
-      const { count } = await (supabase as any)
+      const { count } = await supabase
         .from("capacitaciones")
         .select("id", { count: "exact", head: true })
         .eq("empresa_id", empresa.id)
@@ -376,10 +406,10 @@ export default function Capacitaciones() {
     let capId = editing?.id ?? null;
 
     if (editing) {
-      const { error } = await (supabase as any).from("capacitaciones").update(payload).eq("id", editing.id);
+      const { error } = await supabase.from("capacitaciones").update(payload).eq("id", editing.id);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); setSaving(false); return; }
     } else {
-      const { data, error } = await (supabase as any).from("capacitaciones").insert(payload).select("id").single();
+      const { data, error } = await supabase.from("capacitaciones").insert(payload).select("id").single();
       if (error || !data) { toast({ title: "Error", description: error?.message, variant: "destructive" }); setSaving(false); return; }
       capId = data.id;
     }
@@ -387,15 +417,17 @@ export default function Capacitaciones() {
     // Save attendees — only insert new ones (don't delete existing to preserve firma data)
     if (capId) {
       // Load existing to avoid duplicate inserts
-      const { data: existing } = await (supabase as any)
-        .from("asistencia_capacitacion")
-        .select("trabajador_id, empleado_contratista_id")
-        .eq("capacitacion_id", capId);
+      const { data: existing } = await runQuery<ExistingAsistencia[]>(
+        supabase
+          .from("asistencia_capacitacion")
+          .select("trabajador_id, empleado_contratista_id")
+          .eq("capacitacion_id", capId)
+      );
 
-      const existingTrabIds = new Set((existing ?? []).filter((e: any) => e.trabajador_id).map((e: any) => e.trabajador_id));
-      const existingContIds = new Set((existing ?? []).filter((e: any) => e.empleado_contratista_id).map((e: any) => e.empleado_contratista_id));
+      const existingTrabIds = new Set((existing ?? []).filter((e) => e.trabajador_id).map((e) => e.trabajador_id!));
+      const existingContIds = new Set((existing ?? []).filter((e) => e.empleado_contratista_id).map((e) => e.empleado_contratista_id!));
 
-      const newInserts: any[] = [];
+      const newInserts: AsistenciaCapacitacionInsertPayload[] = [];
       for (const entry of attendeeEntries) {
         if (!entry.selected) continue;
         if (entry.tipo === "trabajador" && !existingTrabIds.has(entry.id)) {
@@ -421,19 +453,22 @@ export default function Capacitaciones() {
         }
         // Update phone for existing ones if changed
         if (entry.tipo === "trabajador" && existingTrabIds.has(entry.id)) {
-          await (supabase as any).from("asistencia_capacitacion")
-            .update({ telefono_whatsapp: entry.telefono || null })
+          await supabase.from("asistencia_capacitacion")
+            .update({ telefono_whatsapp: entry.telefono || null } as unknown as AsistenciaCapacitacionUpdate)
             .eq("capacitacion_id", capId).eq("trabajador_id", entry.id);
         }
         if (entry.tipo === "contratista" && existingContIds.has(entry.id)) {
-          await (supabase as any).from("asistencia_capacitacion")
-            .update({ telefono_whatsapp: entry.telefono || null })
+          await supabase.from("asistencia_capacitacion")
+            .update({ telefono_whatsapp: entry.telefono || null } as unknown as AsistenciaCapacitacionUpdate)
             .eq("capacitacion_id", capId).eq("empleado_contratista_id", entry.id);
         }
       }
 
       if (newInserts.length > 0) {
-        await (supabase as any).from("asistencia_capacitacion").insert(newInserts);
+        const insertBuilder = supabase.from as unknown as (table: string) => {
+          insert: (values: unknown) => Promise<{ error: unknown }>;
+        };
+        await insertBuilder("asistencia_capacitacion").insert(newInserts);
       }
     }
 
@@ -448,7 +483,7 @@ export default function Capacitaciones() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await (supabase as any).from("capacitaciones").delete().eq("id", deleteTarget.id);
+    const { error } = await supabase.from("capacitaciones").delete().eq("id", deleteTarget.id);
     setDeleting(false);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Capacitación eliminada" });
@@ -467,23 +502,25 @@ export default function Capacitaciones() {
   };
 
   const loadAsistencias = async (capId: string) => {
-    const { data } = await (supabase as any)
-      .from("asistencia_capacitacion")
-      .select(`
-        id, capacitacion_id, trabajador_id, empresa_id, tipo_asistente,
-        empleado_contratista_id, asistio, nota, telefono_whatsapp,
-        firma_token, firma_url, firmado_en,
-        trabajador:trabajadores(nombres, apellidos, cargo, numero_documento),
-        empleado:empleados_contratista(nombres, apellidos, cargo, numero_documento)
-      `)
-      .eq("capacitacion_id", capId)
-      .order("created_at", { ascending: true });
+    const { data } = await runQuery<AsistenciaRecord[]>(
+      supabase
+        .from("asistencia_capacitacion")
+        .select(`
+          id, capacitacion_id, trabajador_id, empresa_id, tipo_asistente,
+          empleado_contratista_id, asistio, nota, telefono_whatsapp,
+          firma_token, firma_url, firmado_en,
+          trabajador:trabajadores(nombres, apellidos, cargo, numero_documento),
+          empleado:empleados_contratista(nombres, apellidos, cargo, numero_documento)
+        `)
+        .eq("capacitacion_id", capId)
+        .order("created_at", { ascending: true })
+    );
 
     setAsistencias(data ?? []);
   };
 
   const toggleAsistio = async (asistencia: AsistenciaRecord, value: boolean) => {
-    await (supabase as any).from("asistencia_capacitacion").update({ asistio: value }).eq("id", asistencia.id);
+    await supabase.from("asistencia_capacitacion").update({ asistio: value }).eq("id", asistencia.id);
     setAsistencias((prev) => prev.map((a) => a.id === asistencia.id ? { ...a, asistio: value } : a));
   };
 
@@ -575,7 +612,7 @@ export default function Capacitaciones() {
         firma_url: a.firma_url ?? null,
         firmado_en: a.firmado_en ?? null,
       })),
-      empresa: { nombre: empresa.nombre ?? "Empresa", nit: (empresa as any).nit ?? null },
+      empresa: { nombre: empresa.nombre ?? "Empresa", nit: empresa.nit ?? null },
     });
   };
 
