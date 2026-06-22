@@ -331,11 +331,18 @@ export default function MiEmpresa() {
   useEffect(() => { if (canAdmin(usuario?.rol)) fetchEquipo(); }, [fetchEquipo, usuario?.rol]);
 
   const handleChangeRol = async (userId: string, newRol: string) => {
-    await supabase.from("usuarios").update({ rol: newRol }).eq("id", userId);
-    await supabase.from("user_roles").update({ role: newRol as "super_admin" | "administrador" | "asistente" | "lector" }).eq("user_id", userId);
+    const { error } = await (supabase as any).rpc("change_user_role", {
+      target_user_id: userId,
+      new_role: newRol,
+    });
+    if (error) {
+      toast({ title: "No se pudo cambiar el rol", description: error.message, variant: "destructive" });
+      return;
+    }
     setEquipo(prev => prev.map(u => u.id === userId ? { ...u, rol: newRol } : u));
     toast({ title: "Rol actualizado" });
   };
+
 
   const handleRemoveUser = async () => {
     if (!removingUserId) return;
