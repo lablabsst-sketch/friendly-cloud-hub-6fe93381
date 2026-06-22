@@ -21,7 +21,7 @@ import {
   Building2, Pencil, Save, X, Upload, Users, ShieldCheck,
   Phone, Mail, MapPin, Hash, Briefcase, AlertTriangle, UserCheck,
   FileText, Plus, Trash2, ExternalLink, Clock, CheckCircle2,
-  UserPlus, Copy, Check, Link2,
+  UserPlus, Copy, Check, Link2, Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { canAdmin } from "@/lib/roles";
@@ -399,6 +399,63 @@ export default function MiEmpresa() {
 
   useEffect(() => { if (canAdmin(usuario?.rol)) fetchSolicitudes(); }, [fetchSolicitudes, usuario?.rol]);
 
+  // ── Exportar datos ────────────────────────────────────────────────────────
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportData = async () => {
+    if (!empresa) return;
+    setExporting(true);
+    try {
+      const [
+        { data: trabajadores },
+        { data: proveedores },
+        { data: clientes },
+        { data: capacitaciones },
+        { data: examenes },
+        { data: accidentes },
+        { data: ausencias },
+        { data: documentosTrabajador },
+      ] = await Promise.all([
+        supabase.from("trabajadores").select("*").eq("empresa_id", empresa.id),
+        supabase.from("proveedores").select("*").eq("empresa_id", empresa.id),
+        (supabase as any).from("clientes_portal").select("*").eq("empresa_id", empresa.id),
+        supabase.from("capacitaciones").select("*").eq("empresa_id", empresa.id),
+        (supabase as any).from("examenes_medicos").select("*").eq("empresa_id", empresa.id),
+        (supabase as any).from("accidentes").select("*").eq("empresa_id", empresa.id),
+        supabase.from("ausencias").select("*").eq("empresa_id", empresa.id),
+        (supabase as any).from("documentos_trabajador").select("*").eq("empresa_id", empresa.id),
+      ]);
+
+      const exportData = {
+        empresa: { id: empresa.id, nombre: empresa.nombre, nit: empresa.nit },
+        exportado_en: new Date().toISOString(),
+        datos: {
+          trabajadores: trabajadores ?? [],
+          proveedores: proveedores ?? [],
+          clientes: clientes ?? [],
+          capacitaciones: capacitaciones ?? [],
+          examenes_medicos: examenes ?? [],
+          accidentes: accidentes ?? [],
+          ausencias: ausencias ?? [],
+          documentos_trabajador: documentosTrabajador ?? [],
+        },
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sstlink-datos-${empresa.nombre.replace(/\s+/g, "-").toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "Datos exportados correctamente" });
+    } catch (e: any) {
+      toast({ title: "Error al exportar datos", description: e.message, variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleAprobarSolicitud = async (sol: SolicitudEnlace) => {
     const { error } = await (supabase as any).rpc("accept_solicitud_enlace", { p_solicitud_id: sol.id });
     if (error) {
@@ -537,9 +594,16 @@ export default function MiEmpresa() {
                   </Button>
                 </>
               ) : (
-                <Button variant="outline" size="sm" onClick={startEdit}>
-                  <Pencil className="w-3.5 h-3.5 mr-1" /> Editar
-                </Button>
+                <>
+                  <Button variant="outline" size="sm" onClick={startEdit}>
+                    <Pencil className="w-3.5 h-3.5 mr-1" /> Editar
+                  </Button>
+                  {canAdmin(usuario?.rol) && (
+                    <Button variant="outline" size="sm" onClick={handleExportData} disabled={exporting}>
+                      <Download className="w-3.5 h-3.5 mr-1" /> {exporting ? "Exportando…" : "Exportar datos"}
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           </div>
