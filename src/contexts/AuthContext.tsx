@@ -231,6 +231,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!empresa) {
         console.error("empresa not found:", usuario.empresa_id, empresaError);
+
+        console.error("empresa not found:", usuario.empresa_id, empresaError);
         setState(prev => ({ ...prev, usuario, empresa: null, loading: false, authError: "Empresa no encontrada. Contacta soporte." }));
         return;
       }
