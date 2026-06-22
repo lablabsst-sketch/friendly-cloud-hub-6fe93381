@@ -403,10 +403,10 @@ export default function Capacitaciones() {
     let capId = editing?.id ?? null;
 
     if (editing) {
-      const { error } = await (supabase as any).from("capacitaciones").update(payload).eq("id", editing.id);
+      const { error } = await supabase.from("capacitaciones").update(payload).eq("id", editing.id);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); setSaving(false); return; }
     } else {
-      const { data, error } = await (supabase as any).from("capacitaciones").insert(payload).select("id").single();
+      const { data, error } = await supabase.from("capacitaciones").insert(payload).select("id").single();
       if (error || !data) { toast({ title: "Error", description: error?.message, variant: "destructive" }); setSaving(false); return; }
       capId = data.id;
     }
