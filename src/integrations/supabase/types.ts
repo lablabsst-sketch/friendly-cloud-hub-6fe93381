@@ -2123,6 +2123,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: { Args: { p_token: string }; Returns: Json }
       accept_solicitud_enlace: {
         Args: { p_solicitud_id: string }
         Returns: undefined
@@ -2135,6 +2136,13 @@ export type Database = {
         Returns: boolean
       }
       can_create_empresa: { Args: { _user_id: string }; Returns: boolean }
+      change_user_role: {
+        Args: {
+          new_role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
+        Returns: undefined
+      }
       find_empresa_by_nit: {
         Args: { p_nit: string }
         Returns: {

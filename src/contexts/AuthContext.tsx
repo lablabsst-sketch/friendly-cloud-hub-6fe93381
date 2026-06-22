@@ -192,17 +192,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function fetchUserData(authUser: User) {
     try {
-      console.log("=== DASHBOARD LOAD DEBUG ===");
-      console.log("A. Auth user id:", authUser?.id);
-      console.log("B. Query: usuarios where auth_user_id =", authUser?.id);
-
       const { data: usuarioData, error: usuarioError } = await supabase
         .from("usuarios")
         .select("id, nombre, apellido, cargo, empresa_id, nombre_completo, rol")
         .or(`auth_user_id.eq.${authUser.id},user_id.eq.${authUser.id}`)
         .maybeSingle();
-
-      console.log("C. Usuario result:", usuarioData, usuarioError);
 
       let usuario = usuarioData;
 
@@ -210,16 +204,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const repaired = await ensureProfileFromMetadata(authUser);
 
         if (repaired.error || !repaired.usuario || !repaired.empresa) {
-          console.error("usuario not found for auth_user_id:", authUser.id, usuarioError ?? repaired.error);
           setState(prev => ({ ...prev, usuario: null, empresa: null, loading: false, authError: repaired.error ?? "Perfil de usuario no encontrado. Contacta soporte." }));
           return;
         }
 
-        console.log("C. Usuario result:", repaired.usuario, null);
-        console.log("D. Empresa result:", repaired.empresa, null);
         setState(prev => ({ ...prev, usuario: repaired.usuario, empresa: repaired.empresa, loading: false, authError: null }));
         return;
       }
+
 
       let empresa: Empresa | null = null;
       let empresaError: Error | null = null;
@@ -235,10 +227,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         empresaError = error;
       }
 
-      console.log("D. Empresa result:", empresa, empresaError);
-
       if (!empresa) {
         console.error("empresa not found:", usuario.empresa_id, empresaError);
+
         setState(prev => ({ ...prev, usuario, empresa: null, loading: false, authError: "Empresa no encontrada. Contacta soporte." }));
         return;
       }
