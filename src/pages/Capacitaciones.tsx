@@ -467,11 +467,10 @@ export default function Capacitaciones() {
       }
 
       if (newInserts.length > 0) {
-        await (
-          supabase.from("asistencia_capacitacion") as unknown as {
-            insert: (values: AsistenciaCapacitacionInsertPayload[]) => Promise<{ error: unknown }>;
-          }
-        ).insert(newInserts);
+        const insertBuilder = supabase.from as unknown as (table: string) => {
+          insert: (values: unknown) => Promise<{ error: unknown }>;
+        };
+        await insertBuilder("asistencia_capacitacion").insert(newInserts);
       }
     }
 
