@@ -173,6 +173,7 @@ interface ExistingAsistencia {
   telefono_whatsapp: string | null;
 }
 
+type AsistenciaCapacitacionUpdate = Database["public"]["Tables"]["asistencia_capacitacion"]["Update"];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
