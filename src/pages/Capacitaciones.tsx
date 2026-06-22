@@ -485,7 +485,7 @@ export default function Capacitaciones() {
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await (supabase as any).from("capacitaciones").delete().eq("id", deleteTarget.id);
+    const { error } = await supabase.from("capacitaciones").delete().eq("id", deleteTarget.id);
     setDeleting(false);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Capacitación eliminada" });
@@ -504,23 +504,25 @@ export default function Capacitaciones() {
   };
 
   const loadAsistencias = async (capId: string) => {
-    const { data } = await (supabase as any)
-      .from("asistencia_capacitacion")
-      .select(`
-        id, capacitacion_id, trabajador_id, empresa_id, tipo_asistente,
-        empleado_contratista_id, asistio, nota, telefono_whatsapp,
-        firma_token, firma_url, firmado_en,
-        trabajador:trabajadores(nombres, apellidos, cargo, numero_documento),
-        empleado:empleados_contratista(nombres, apellidos, cargo, numero_documento)
-      `)
-      .eq("capacitacion_id", capId)
-      .order("created_at", { ascending: true });
+    const { data } = await runQuery<AsistenciaRecord[]>(
+      supabase
+        .from("asistencia_capacitacion")
+        .select(`
+          id, capacitacion_id, trabajador_id, empresa_id, tipo_asistente,
+          empleado_contratista_id, asistio, nota, telefono_whatsapp,
+          firma_token, firma_url, firmado_en,
+          trabajador:trabajadores(nombres, apellidos, cargo, numero_documento),
+          empleado:empleados_contratista(nombres, apellidos, cargo, numero_documento)
+        `)
+        .eq("capacitacion_id", capId)
+        .order("created_at", { ascending: true })
+    );
 
     setAsistencias(data ?? []);
   };
 
   const toggleAsistio = async (asistencia: AsistenciaRecord, value: boolean) => {
-    await (supabase as any).from("asistencia_capacitacion").update({ asistio: value }).eq("id", asistencia.id);
+    await supabase.from("asistencia_capacitacion").update({ asistio: value }).eq("id", asistencia.id);
     setAsistencias((prev) => prev.map((a) => a.id === asistencia.id ? { ...a, asistio: value } : a));
   };
 
