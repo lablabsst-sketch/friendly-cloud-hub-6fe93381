@@ -150,7 +150,7 @@ const emptyForm = {
 };
 
 // Helper to query tables whose generated types lag behind the real schema
-async function runQuery<T>(promise: Promise<{ data: unknown; error: unknown }>): Promise<{ data: T | null; error: unknown }> {
+async function runQuery<T>(promise: PromiseLike<{ data: unknown; error: unknown }>): Promise<{ data: T | null; error: unknown }> {
   const { data, error } = await promise;
   return { data: data as T | null, error };
 }
