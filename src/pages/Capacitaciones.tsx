@@ -450,19 +450,21 @@ export default function Capacitaciones() {
         }
         // Update phone for existing ones if changed
         if (entry.tipo === "trabajador" && existingTrabIds.has(entry.id)) {
+          const updatePayload = { telefono_whatsapp: entry.telefono || null };
           await supabase.from("asistencia_capacitacion")
-            .update({ telefono_whatsapp: entry.telefono || null })
+            .update(updatePayload)
             .eq("capacitacion_id", capId).eq("trabajador_id", entry.id);
         }
         if (entry.tipo === "contratista" && existingContIds.has(entry.id)) {
+          const updatePayload = { telefono_whatsapp: entry.telefono || null };
           await supabase.from("asistencia_capacitacion")
-            .update({ telefono_whatsapp: entry.telefono || null })
+            .update(updatePayload)
             .eq("capacitacion_id", capId).eq("empleado_contratista_id", entry.id);
         }
       }
 
       if (newInserts.length > 0) {
-        await supabase.from("asistencia_capacitacion").insert(newInserts);
+        await supabase.from("asistencia_capacitacion").insert(newInserts as unknown[]);
       }
     }
 
