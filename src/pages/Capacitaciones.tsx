@@ -429,7 +429,7 @@ export default function Capacitaciones() {
       const existingTrabIds = new Set((existing ?? []).filter((e) => e.trabajador_id).map((e) => e.trabajador_id!));
       const existingContIds = new Set((existing ?? []).filter((e) => e.empleado_contratista_id).map((e) => e.empleado_contratista_id!));
 
-      const newInserts: AsistenciaCapacitacionInsert[] = [];
+      const newInserts: AsistenciaCapacitacionInsertPayload[] = [];
       for (const entry of attendeeEntries) {
         if (!entry.selected) continue;
         if (entry.tipo === "trabajador" && !existingTrabIds.has(entry.id)) {
