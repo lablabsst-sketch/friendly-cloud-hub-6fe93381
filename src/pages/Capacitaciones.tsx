@@ -349,10 +349,12 @@ export default function Capacitaciones() {
     setSearchConvocatoria("");
 
     // Load existing attendees
-    const { data } = await (supabase as any)
-      .from("asistencia_capacitacion")
-      .select("tipo_asistente, trabajador_id, empleado_contratista_id, telefono_whatsapp")
-      .eq("capacitacion_id", c.id);
+    const { data } = await runQuery<ExistingAsistencia[]>(
+      supabase
+        .from("asistencia_capacitacion")
+        .select("tipo_asistente, trabajador_id, empleado_contratista_id, telefono_whatsapp")
+        .eq("capacitacion_id", c.id)
+    );
 
     buildAttendeeEntries(data ?? []);
     setFormOpen(true);
