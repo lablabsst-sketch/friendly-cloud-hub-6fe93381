@@ -614,7 +614,7 @@ export default function Capacitaciones() {
         firma_url: a.firma_url ?? null,
         firmado_en: a.firmado_en ?? null,
       })),
-      empresa: { nombre: empresa.nombre ?? "Empresa", nit: (empresa as any).nit ?? null },
+      empresa: { nombre: empresa.nombre ?? "Empresa", nit: empresa.nit ?? null },
     });
   };
 
