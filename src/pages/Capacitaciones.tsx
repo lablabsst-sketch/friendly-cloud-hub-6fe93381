@@ -173,6 +173,10 @@ interface ExistingAsistencia {
   telefono_whatsapp: string | null;
 }
 
+type CapacitacionUpdate = Database["public"]["Tables"]["capacitaciones"]["Update"];
+type AsistenciaCapacitacionUpdate = Database["public"]["Tables"]["asistencia_capacitacion"]["Update"];
+type AsistenciaCapacitacionInsert = Database["public"]["Tables"]["asistencia_capacitacion"]["Insert"];
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const getAttendeeName = (a: AsistenciaRecord): string => {
