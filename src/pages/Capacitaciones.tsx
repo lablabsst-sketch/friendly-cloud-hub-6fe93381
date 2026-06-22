@@ -149,6 +149,29 @@ const emptyForm = {
   archivo_url: "",
 };
 
+// Helper to query tables whose generated types lag behind the real schema
+async function runQuery<T>(promise: Promise<{ data: unknown; error: unknown }>): Promise<{ data: T | null; error: unknown }> {
+  const { data, error } = await promise;
+  return { data: data as T | null, error };
+}
+
+interface AsistenciaCapacitacionInsert {
+  capacitacion_id: string;
+  empresa_id: string;
+  tipo_asistente: "trabajador" | "contratista";
+  trabajador_id: string | null;
+  empleado_contratista_id: string | null;
+  telefono_whatsapp: string | null;
+  asistio: boolean;
+}
+
+interface ExistingAsistencia {
+  tipo_asistente: "trabajador" | "contratista";
+  trabajador_id: string | null;
+  empleado_contratista_id: string | null;
+  telefono_whatsapp: string | null;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const getAttendeeName = (a: AsistenciaRecord): string => {
