@@ -289,7 +289,7 @@ export default function Capacitaciones() {
   // ─── Build attendee entries for form ───────────────────────────────────────
 
   const buildAttendeeEntries = useCallback(
-    (existingAsistencias: AsistenciaRecord[] = []) => {
+    (existingAsistencias: ExistingAsistencia[] = []) => {
       const existingTrabMap = new Map(
         existingAsistencias.filter((a) => a.tipo_asistente === "trabajador").map((a) => [a.trabajador_id!, a])
       );
