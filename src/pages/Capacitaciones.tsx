@@ -156,7 +156,7 @@ async function runQuery<T>(promise: PromiseLike<{ data: unknown; error: unknown 
   return { data: data as T | null, error };
 }
 
-interface AsistenciaCapacitacionInsert {
+interface AsistenciaCapacitacionInsertPayload {
   capacitacion_id: string;
   empresa_id: string;
   tipo_asistente: "trabajador" | "contratista";
