@@ -414,15 +414,17 @@ export default function Capacitaciones() {
     // Save attendees — only insert new ones (don't delete existing to preserve firma data)
     if (capId) {
       // Load existing to avoid duplicate inserts
-      const { data: existing } = await (supabase as any)
-        .from("asistencia_capacitacion")
-        .select("trabajador_id, empleado_contratista_id")
-        .eq("capacitacion_id", capId);
+      const { data: existing } = await runQuery<ExistingAsistencia[]>(
+        supabase
+          .from("asistencia_capacitacion")
+          .select("trabajador_id, empleado_contratista_id")
+          .eq("capacitacion_id", capId)
+      );
 
-      const existingTrabIds = new Set((existing ?? []).filter((e: any) => e.trabajador_id).map((e: any) => e.trabajador_id));
-      const existingContIds = new Set((existing ?? []).filter((e: any) => e.empleado_contratista_id).map((e: any) => e.empleado_contratista_id));
+      const existingTrabIds = new Set((existing ?? []).filter((e) => e.trabajador_id).map((e) => e.trabajador_id!));
+      const existingContIds = new Set((existing ?? []).filter((e) => e.empleado_contratista_id).map((e) => e.empleado_contratista_id!));
 
-      const newInserts: any[] = [];
+      const newInserts: AsistenciaCapacitacionInsert[] = [];
       for (const entry of attendeeEntries) {
         if (!entry.selected) continue;
         if (entry.tipo === "trabajador" && !existingTrabIds.has(entry.id)) {
@@ -448,19 +450,19 @@ export default function Capacitaciones() {
         }
         // Update phone for existing ones if changed
         if (entry.tipo === "trabajador" && existingTrabIds.has(entry.id)) {
-          await (supabase as any).from("asistencia_capacitacion")
+          await supabase.from("asistencia_capacitacion")
             .update({ telefono_whatsapp: entry.telefono || null })
             .eq("capacitacion_id", capId).eq("trabajador_id", entry.id);
         }
         if (entry.tipo === "contratista" && existingContIds.has(entry.id)) {
-          await (supabase as any).from("asistencia_capacitacion")
+          await supabase.from("asistencia_capacitacion")
             .update({ telefono_whatsapp: entry.telefono || null })
             .eq("capacitacion_id", capId).eq("empleado_contratista_id", entry.id);
         }
       }
 
       if (newInserts.length > 0) {
-        await (supabase as any).from("asistencia_capacitacion").insert(newInserts);
+        await supabase.from("asistencia_capacitacion").insert(newInserts);
       }
     }
 
