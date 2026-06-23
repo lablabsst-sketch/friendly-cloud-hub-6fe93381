@@ -267,27 +267,33 @@ export type Database = {
           asistio: boolean | null
           capacitacion_id: string
           created_at: string
+          empleado_contratista_id: string | null
           empresa_id: string
           id: string
           nota: number | null
+          telefono_whatsapp: string | null
           trabajador_id: string
         }
         Insert: {
           asistio?: boolean | null
           capacitacion_id: string
           created_at?: string
+          empleado_contratista_id?: string | null
           empresa_id: string
           id?: string
           nota?: number | null
+          telefono_whatsapp?: string | null
           trabajador_id: string
         }
         Update: {
           asistio?: boolean | null
           capacitacion_id?: string
           created_at?: string
+          empleado_contratista_id?: string | null
           empresa_id?: string
           id?: string
           nota?: number | null
+          telefono_whatsapp?: string | null
           trabajador_id?: string
         }
         Relationships: [
@@ -296,6 +302,13 @@ export type Database = {
             columns: ["capacitacion_id"]
             isOneToOne: false
             referencedRelation: "capacitaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asistencia_capacitacion_empleado_contratista_id_fkey"
+            columns: ["empleado_contratista_id"]
+            isOneToOne: false
+            referencedRelation: "empleados_contratista"
             referencedColumns: ["id"]
           },
           {
@@ -376,39 +389,51 @@ export type Database = {
       }
       capacitaciones: {
         Row: {
+          archivo_url: string | null
           created_at: string
           descripcion: string | null
           duracion_horas: number | null
           empresa_id: string
           estado: string
           fecha: string
+          firma_token: string | null
           id: string
+          link_reunion: string | null
+          modalidad: string | null
           responsable: string | null
           tipo: string | null
           titulo: string
           updated_at: string
         }
         Insert: {
+          archivo_url?: string | null
           created_at?: string
           descripcion?: string | null
           duracion_horas?: number | null
           empresa_id: string
           estado?: string
           fecha: string
+          firma_token?: string | null
           id?: string
+          link_reunion?: string | null
+          modalidad?: string | null
           responsable?: string | null
           tipo?: string | null
           titulo: string
           updated_at?: string
         }
         Update: {
+          archivo_url?: string | null
           created_at?: string
           descripcion?: string | null
           duracion_horas?: number | null
           empresa_id?: string
           estado?: string
           fecha?: string
+          firma_token?: string | null
           id?: string
+          link_reunion?: string | null
+          modalidad?: string | null
           responsable?: string | null
           tipo?: string | null
           titulo?: string
