@@ -66,15 +66,12 @@ export default function Register() {
   useEffect(() => {
     if (!provToken) return;
     (async () => {
-      const { data } = await (supabase as any)
-        .from("proveedores")
-        .select("nombre, nit, email, empresa_id")
-        .eq("invite_token", provToken)
-        .single();
-      if (data) {
-        setProvData({ nombre: data.nombre, nit: data.nit, email: data.email, empresa_cliente_id: data.empresa_id });
-        setNombre(data.nombre ?? "");
-        setNit(data.nit ?? "");
+      const { data } = await (supabase as any).rpc("get_proveedor_by_token", { p_token: provToken });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) {
+        setProvData({ nombre: row.nombre, nit: row.nit, email: row.email, empresa_cliente_id: row.empresa_id });
+        setNombre(row.nombre ?? "");
+        setNit(row.nit ?? "");
         setProvTokenValid(true);
       } else {
         setProvTokenValid(false);
@@ -91,15 +88,11 @@ export default function Register() {
   useEffect(() => {
     if (!invToken) return;
     (async () => {
-      const { data } = await (supabase as any)
-        .from("invitaciones")
-        .select("rol, estado, empresas(nombre)")
-        .eq("token", invToken)
-        .eq("estado", "pendiente")
-        .single();
-      if (data) {
-        setInvRol(data.rol);
-        setInvEmpresaNombre(data.empresas?.nombre ?? null);
+      const { data } = await (supabase as any).rpc("get_invitation_by_token", { p_token: invToken });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) {
+        setInvRol(row.rol);
+        setInvEmpresaNombre(row.empresa_nombre ?? null);
         setInvValid(true);
       } else {
         setInvValid(false);
@@ -355,9 +348,10 @@ export default function Register() {
           rol: "administrador",
         });
         await supabase.from("user_roles").insert({ user_id: authUserId, role: "administrador" });
-        await (supabase as any).from("proveedores")
-          .update({ empresa_proveedor_id: empresaCreada.id, invite_token: null })
-          .eq("invite_token", provToken);
+        await (supabase as any).rpc("link_proveedor_to_empresa_by_token", {
+          p_token: provToken,
+          p_empresa_proveedor_id: empresaCreada.id,
+        });
 
         try {
           const { count } = await (supabase as any)
