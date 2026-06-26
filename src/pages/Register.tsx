@@ -348,9 +348,10 @@ export default function Register() {
           rol: "administrador",
         });
         await supabase.from("user_roles").insert({ user_id: authUserId, role: "administrador" });
-        await (supabase as any).from("proveedores")
-          .update({ empresa_proveedor_id: empresaCreada.id, invite_token: null })
-          .eq("invite_token", provToken);
+        await (supabase as any).rpc("link_proveedor_to_empresa_by_token", {
+          p_token: provToken,
+          p_empresa_proveedor_id: empresaCreada.id,
+        });
 
         try {
           const { count } = await (supabase as any)
