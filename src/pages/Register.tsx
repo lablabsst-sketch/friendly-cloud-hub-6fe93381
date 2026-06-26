@@ -66,15 +66,12 @@ export default function Register() {
   useEffect(() => {
     if (!provToken) return;
     (async () => {
-      const { data } = await (supabase as any)
-        .from("proveedores")
-        .select("nombre, nit, email, empresa_id")
-        .eq("invite_token", provToken)
-        .single();
-      if (data) {
-        setProvData({ nombre: data.nombre, nit: data.nit, email: data.email, empresa_cliente_id: data.empresa_id });
-        setNombre(data.nombre ?? "");
-        setNit(data.nit ?? "");
+      const { data } = await (supabase as any).rpc("get_proveedor_by_token", { p_token: provToken });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) {
+        setProvData({ nombre: row.nombre, nit: row.nit, email: row.email, empresa_cliente_id: row.empresa_id });
+        setNombre(row.nombre ?? "");
+        setNit(row.nit ?? "");
         setProvTokenValid(true);
       } else {
         setProvTokenValid(false);
