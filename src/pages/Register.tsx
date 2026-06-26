@@ -88,15 +88,11 @@ export default function Register() {
   useEffect(() => {
     if (!invToken) return;
     (async () => {
-      const { data } = await (supabase as any)
-        .from("invitaciones")
-        .select("rol, estado, empresas(nombre)")
-        .eq("token", invToken)
-        .eq("estado", "pendiente")
-        .single();
-      if (data) {
-        setInvRol(data.rol);
-        setInvEmpresaNombre(data.empresas?.nombre ?? null);
+      const { data } = await (supabase as any).rpc("get_invitation_by_token", { p_token: invToken });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) {
+        setInvRol(row.rol);
+        setInvEmpresaNombre(row.empresa_nombre ?? null);
         setInvValid(true);
       } else {
         setInvValid(false);
