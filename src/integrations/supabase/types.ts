@@ -2175,10 +2175,31 @@ export type Database = {
           nombre: string
         }[]
       }
+      firma_asistencia_id_from_name: {
+        Args: { p_name: string }
+        Returns: string
+      }
       get_cumplimiento_phva: { Args: { p_empresa_id: string }; Returns: Json }
+      get_invitation_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          empresa_nombre: string
+          estado: string
+          rol: string
+        }[]
+      }
       get_portal_cliente:
         | { Args: { p_empresa_id: string; p_nit: string }; Returns: Json }
         | { Args: { p_nit_cedula: string }; Returns: Json }
+      get_proveedor_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          email: string
+          empresa_id: string
+          nit: string
+          nombre: string
+        }[]
+      }
       get_user_empresa_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -2186,6 +2207,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      link_proveedor_to_empresa_by_token: {
+        Args: { p_empresa_proveedor_id: string; p_token: string }
+        Returns: undefined
       }
       normalize_nit: { Args: { p_nit: string }; Returns: string }
     }
