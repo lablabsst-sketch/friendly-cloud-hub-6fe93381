@@ -2168,6 +2168,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_invitation_and_get_token: {
+        Args: { p_email: string; p_rol: string }
+        Returns: {
+          id: string
+          token: string
+        }[]
+      }
       find_empresa_by_nit: {
         Args: { p_nit: string }
         Returns: {
@@ -2186,6 +2193,17 @@ export type Database = {
           empresa_nombre: string
           estado: string
           rol: string
+        }[]
+      }
+      get_pending_invitations_with_token: {
+        Args: { p_empresa_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          estado: string
+          id: string
+          rol: string
+          token: string
         }[]
       }
       get_portal_cliente:
