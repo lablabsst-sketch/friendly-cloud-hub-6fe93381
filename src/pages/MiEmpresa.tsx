@@ -417,8 +417,8 @@ export default function MiEmpresa() {
         { data: documentosTrabajador },
       ] = await Promise.all([
         supabase.from("trabajadores").select("*").eq("empresa_id", empresa.id),
-        supabase.from("proveedores").select("*").eq("empresa_id", empresa.id),
-        (supabase as any).from("clientes_portal").select("*").eq("empresa_id", empresa.id),
+        supabase.from("proveedores").select("id, empresa_id, nombre, nit, tipo_servicio, representante, email, telefono, ciudad, departamento, arl, fecha_inicio_contrato, fecha_fin_contrato, estado, notas, created_at, updated_at").eq("empresa_id", empresa.id),
+        (supabase as any).from("clientes_portal").select("id, empresa_id, nombre, nit_cedula, tipo, contacto, email, telefono, activo, notas, created_at, updated_at").eq("empresa_id", empresa.id),
         supabase.from("capacitaciones").select("*").eq("empresa_id", empresa.id),
         (supabase as any).from("examenes_medicos").select("*").eq("empresa_id", empresa.id),
         (supabase as any).from("accidentes").select("*").eq("empresa_id", empresa.id),
