@@ -139,33 +139,11 @@ export default function FirmaCapacitacion() {
     if (!dataURL) { setUploading(false); return; }
 
     try {
-      // Convert base64 to blob
-      const fetchRes = await fetch(dataURL);
-      const blob = await fetchRes.blob();
-      const filename = `${asistencia.id}_${Date.now()}.png`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("firmas")
-        .upload(filename, blob, { contentType: "image/png", upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // Signed URL (bucket is private). 10 years = effectively permanent for our use.
-      const { data: urlData } = await supabase.storage
-        .from("firmas")
-        .createSignedUrl(filename, 60 * 60 * 24 * 365 * 10);
-      const publicUrl = urlData?.signedUrl;
-
-      const { error: updateError } = await (supabase as any)
-        .from("asistencia_capacitacion")
-        .update({
-          firma_url: publicUrl,
-          firmado_en: new Date().toISOString(),
-          asistio: true,
-        })
-        .eq("id", asistencia.id);
-
-      if (updateError) throw updateError;
+      const { data, error } = await supabase.functions.invoke("submit-firma", {
+        body: { firma_token: token, dataURL },
+      });
+      if (error) throw error;
+      if (data && (data as any).error) throw new Error((data as any).error);
       setStep("done");
     } catch (err) {
       console.error(err);
