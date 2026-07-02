@@ -121,7 +121,7 @@ export default function Proveedores() {
     setLoading(true);
     const { data, error } = await (supabase as any)
       .from("proveedores")
-      .select("*")
+      .select("id, empresa_id, empresa_proveedor_id, nombre, nit, tipo_servicio, representante, email, telefono, ciudad, departamento, arl, fecha_inicio_contrato, fecha_fin_contrato, estado, notas, created_at, updated_at")
       .eq("empresa_id", empresa.id)
       .order("nombre");
     if (error) toast({ title: "Error al cargar proveedores", description: error.message, variant: "destructive" });

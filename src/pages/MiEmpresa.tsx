@@ -321,7 +321,7 @@ export default function MiEmpresa() {
     setLoadingEquipo(true);
     const [{ data: users }, { data: invs }] = await Promise.all([
       supabase.from("usuarios").select("id, nombre_completo, email, rol, cargo").eq("empresa_id", authEmpresa.id).order("nombre_completo"),
-      (supabase as any).from("invitaciones").select("id, email, rol, token, estado, created_at").eq("empresa_id", authEmpresa.id).eq("estado", "pendiente").order("created_at", { ascending: false }),
+      (supabase as any).rpc("get_pending_invitations_with_token", { p_empresa_id: authEmpresa.id }),
     ]);
     setEquipo(users ?? []);
     setInvitaciones(invs ?? []);
@@ -364,13 +364,13 @@ export default function MiEmpresa() {
     if (!authEmpresa?.id || !inviteForm.email.trim()) return;
     setSavingInvite(true);
     try {
-      const { data, error } = await (supabase as any)
-        .from("invitaciones")
-        .insert({ empresa_id: authEmpresa.id, email: inviteForm.email.trim().toLowerCase(), rol: inviteForm.rol })
-        .select("token")
-        .single();
+      const { data, error } = await (supabase as any).rpc("create_invitation_and_get_token", {
+        p_email: inviteForm.email.trim().toLowerCase(),
+        p_rol: inviteForm.rol,
+      });
       if (error) throw error;
-      setGeneratedLink(`${window.location.origin}/register?inv=${data.token}`);
+      const row = Array.isArray(data) ? data[0] : data;
+      setGeneratedLink(`${window.location.origin}/register?inv=${row.token}`);
       fetchEquipo();
     } catch {
       toast({ title: "Error al crear invitación", variant: "destructive" });
@@ -417,8 +417,8 @@ export default function MiEmpresa() {
         { data: documentosTrabajador },
       ] = await Promise.all([
         supabase.from("trabajadores").select("*").eq("empresa_id", empresa.id),
-        supabase.from("proveedores").select("*").eq("empresa_id", empresa.id),
-        (supabase as any).from("clientes_portal").select("*").eq("empresa_id", empresa.id),
+        supabase.from("proveedores").select("id, empresa_id, nombre, nit, tipo_servicio, representante, email, telefono, ciudad, departamento, arl, fecha_inicio_contrato, fecha_fin_contrato, estado, notas, created_at, updated_at").eq("empresa_id", empresa.id),
+        (supabase as any).from("clientes_portal").select("id, empresa_id, nombre, nit_cedula, tipo, contacto, email, telefono, activo, notas, created_at, updated_at").eq("empresa_id", empresa.id),
         supabase.from("capacitaciones").select("*").eq("empresa_id", empresa.id),
         (supabase as any).from("examenes_medicos").select("*").eq("empresa_id", empresa.id),
         (supabase as any).from("accidentes").select("*").eq("empresa_id", empresa.id),

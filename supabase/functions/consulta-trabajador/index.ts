@@ -25,6 +25,16 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Require shared secret from the calling bot
+    const expected = Deno.env.get("BOT_SHARED_SECRET");
+    if (!expected) {
+      return jsonResponse({ encontrado: false, error: "Servicio no configurado." }, 500);
+    }
+    const provided = req.headers.get("x-bot-secret") ?? "";
+    if (provided !== expected) {
+      return jsonResponse({ encontrado: false, error: "No autorizado." }, 401);
+    }
+
     // Accept documento via JSON body OR query string (easier for bots)
     let documento: string | null = null;
     if (req.method === "POST") {

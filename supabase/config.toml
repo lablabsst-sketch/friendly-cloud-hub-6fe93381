@@ -1,1 +1,7 @@
 project_id = "vnewxaduszcnxjtpojss"
+
+[functions.submit-firma]
+verify_jwt = false
+
+[functions.consulta-trabajador]
+verify_jwt = false

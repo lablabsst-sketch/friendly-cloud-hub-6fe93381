@@ -496,8 +496,11 @@ export default function InspeccionesPage() {
       const path = `${empresa.id}/${inspeccionActual.id}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("inspecciones").upload(path, file);
       if (error) throw error;
-      const { data: urlData } = supabase.storage.from("inspecciones").getPublicUrl(path);
-      setFormElemento(prev => ({ ...prev, foto_urls: [...prev.foto_urls, urlData.publicUrl] }));
+      // Bucket is private; sign a long-lived URL for display.
+      const { data: urlData } = await supabase.storage
+        .from("inspecciones")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+      setFormElemento(prev => ({ ...prev, foto_urls: [...prev.foto_urls, urlData?.signedUrl ?? path] }));
     } catch {
       toast({ title: "Error al subir la foto", variant: "destructive" });
     } finally { setUploadingFoto(false); }
