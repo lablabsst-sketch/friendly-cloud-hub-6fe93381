@@ -364,13 +364,13 @@ export default function MiEmpresa() {
     if (!authEmpresa?.id || !inviteForm.email.trim()) return;
     setSavingInvite(true);
     try {
-      const { data, error } = await (supabase as any)
-        .from("invitaciones")
-        .insert({ empresa_id: authEmpresa.id, email: inviteForm.email.trim().toLowerCase(), rol: inviteForm.rol })
-        .select("token")
-        .single();
+      const { data, error } = await (supabase as any).rpc("create_invitation_and_get_token", {
+        p_email: inviteForm.email.trim().toLowerCase(),
+        p_rol: inviteForm.rol,
+      });
       if (error) throw error;
-      setGeneratedLink(`${window.location.origin}/register?inv=${data.token}`);
+      const row = Array.isArray(data) ? data[0] : data;
+      setGeneratedLink(`${window.location.origin}/register?inv=${row.token}`);
       fetchEquipo();
     } catch {
       toast({ title: "Error al crear invitación", variant: "destructive" });
