@@ -321,7 +321,7 @@ export default function MiEmpresa() {
     setLoadingEquipo(true);
     const [{ data: users }, { data: invs }] = await Promise.all([
       supabase.from("usuarios").select("id, nombre_completo, email, rol, cargo").eq("empresa_id", authEmpresa.id).order("nombre_completo"),
-      (supabase as any).from("invitaciones").select("id, email, rol, token, estado, created_at").eq("empresa_id", authEmpresa.id).eq("estado", "pendiente").order("created_at", { ascending: false }),
+      (supabase as any).rpc("get_pending_invitations_with_token", { p_empresa_id: authEmpresa.id }),
     ]);
     setEquipo(users ?? []);
     setInvitaciones(invs ?? []);
