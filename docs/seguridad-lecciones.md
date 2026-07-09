@@ -105,12 +105,49 @@ GRANT EXECUTE ON FUNCTION nombre() TO authenticated;
 
 ---
 
+## 9. Column-level security en tokens de portal e invitaciones
+
+**Error:** Las columnas `token` en `clientes_portal` e `invitaciones` eran visibles a todos los usuarios de la misma empresa vía SELECT, permitiendo account takeover.
+
+**Fix aplicado:**
+```sql
+REVOKE SELECT (token) ON public.clientes_portal FROM authenticated;
+REVOKE SELECT (token) ON public.invitaciones FROM authenticated;
+-- Acceso solo vía RPC con SECURITY DEFINER
+```
+
+**Regla futura:** Toda columna llamada `token`, `secret`, `invite_token`, `firma_token`, `access_token` debe tener `REVOKE SELECT` para `authenticated` desde el momento de creación.
+
+---
+
+## 10. user_roles INSERT/UPDATE sin scope de empresa — escalada de privilegios
+
+**Error:** La política INSERT de `user_roles` no validaba que el usuario destino perteneciera a la misma empresa del caller, permitiendo que cualquier admin se otorgara rol en otra empresa.
+
+**Fix aplicado:** Política reescrita con doble validación: caller es admin + empresa del target == empresa del caller.
+
+**Regla futura:** Toda política sobre tablas de roles/permisos debe tener:
+1. `has_role(auth.uid(), 'administrador')` — solo admins pueden modificar
+2. Scope explícito de empresa en el WITH CHECK — nunca asumir que ser admin es suficiente
+
+---
+
+## 11. Bucket sin política UPDATE
+
+**Error:** Bucket `inspecciones` tenía INSERT y SELECT pero no UPDATE, impidiendo a los owners actualizar sus archivos.
+
+**Regla futura:** Al crear políticas de storage, verificar las 4 operaciones: SELECT, INSERT, UPDATE, DELETE. No omitir UPDATE por olvido.
+
+---
+
 ## Checklist de seguridad para nuevos proyectos Supabase
 
 - [ ] Todos los buckets creados como **privados**
+- [ ] Buckets con las 4 políticas: SELECT, INSERT, UPDATE, DELETE
 - [ ] Edge Functions externas con `X-Bot-Secret` o JWT
 - [ ] Políticas RLS siempre filtran por `empresa_id` o equivalente
-- [ ] Columnas con tokens: column-level security desde el inicio
+- [ ] Columnas `token`/`secret`: `REVOKE SELECT FROM authenticated` desde el inicio
+- [ ] Políticas de roles: doble validación (es admin + misma empresa)
 - [ ] Funciones SECURITY DEFINER: REVOKE PUBLIC + SET search_path
 - [ ] Políticas de invitaciones/tokens: vía RPC, no USING(true)
 - [ ] Revisar políticas stale al cambiar flujos
