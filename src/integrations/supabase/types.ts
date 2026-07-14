@@ -2206,9 +2206,7 @@ export type Database = {
           token: string
         }[]
       }
-      get_portal_cliente:
-        | { Args: { p_empresa_id: string; p_nit: string }; Returns: Json }
-        | { Args: { p_nit_cedula: string }; Returns: Json }
+      get_portal_cliente: { Args: { p_nit_cedula: string }; Returns: Json }
       get_proveedor_by_token: {
         Args: { p_token: string }
         Returns: {
