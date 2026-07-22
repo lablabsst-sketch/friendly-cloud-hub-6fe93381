@@ -370,8 +370,30 @@ export default function MiEmpresa() {
       });
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
-      setGeneratedLink(`${window.location.origin}/register?inv=${row.token}`);
+      const link = `${window.location.origin}/register?inv=${row.token}`;
+      setGeneratedLink(link);
       fetchEquipo();
+
+      // Enviar email automáticamente. Si falla, mantenemos el link visible como fallback.
+      try {
+        const { error: mailError } = await supabase.functions.invoke("send-invitation-email", {
+          body: {
+            email: inviteForm.email.trim().toLowerCase(),
+            token: row.token,
+            tipo: "equipo",
+            empresa_nombre: authEmpresa.nombre,
+            rol: inviteForm.rol,
+          },
+        });
+        if (mailError) throw mailError;
+        toast({ title: "Invitación enviada", description: `Enviamos el enlace a ${inviteForm.email.trim()}` });
+      } catch (mailErr) {
+        console.warn("send-invitation-email failed", mailErr);
+        toast({
+          title: "Enlace generado",
+          description: "No pudimos enviar el correo automáticamente. Copia y comparte el enlace manualmente.",
+        });
+      }
     } catch {
       toast({ title: "Error al crear invitación", variant: "destructive" });
     } finally {

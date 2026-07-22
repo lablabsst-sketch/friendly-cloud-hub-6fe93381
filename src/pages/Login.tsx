@@ -99,12 +99,12 @@ export default function Login() {
           </form>
 
           <div className="mt-4 text-center">
-            <button
-              type="button"
+            <Link
+              to="/forgot-password"
               className="text-xs text-muted-foreground hover:text-primary transition-colors"
             >
-              Recuperar cuenta por RUT
-            </button>
+              ¿Olvidaste tu contraseña?
+            </Link>
           </div>
         </div>
 
