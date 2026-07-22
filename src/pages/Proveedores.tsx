@@ -289,6 +289,28 @@ export default function Proveedores() {
       if (error) throw error;
       setInviteLink(`${window.location.origin}/register?prov=${token}`);
       setInviteProveedor(prov);
+
+      // Enviar email automáticamente si el proveedor tiene email
+      if (prov.email && empresa?.nombre) {
+        try {
+          const { error: mailError } = await supabase.functions.invoke("send-invitation-email", {
+            body: {
+              email: prov.email.trim().toLowerCase(),
+              token,
+              tipo: "proveedor",
+              empresa_nombre: empresa.nombre,
+            },
+          });
+          if (mailError) throw mailError;
+          toast({ title: "Invitación enviada", description: `Enviamos el enlace a ${prov.email}` });
+        } catch (mailErr) {
+          console.warn("send-invitation-email failed", mailErr);
+          toast({
+            title: "Enlace generado",
+            description: "No pudimos enviar el correo automáticamente. Copia y comparte el enlace manualmente.",
+          });
+        }
+      }
     } catch {
       toast({ title: "Error al generar invitación", variant: "destructive" });
     } finally {
