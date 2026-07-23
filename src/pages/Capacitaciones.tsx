@@ -97,6 +97,9 @@ interface AsistenciaRecord {
   // Joined
   trabajador?: { nombres: string; apellidos: string; cargo: string | null; numero_documento: string } | null;
   empleado?: { nombres: string; apellidos: string; cargo: string | null; numero_documento: string } | null;
+  // Derived: mejor puntaje de evaluacion_intentos
+  mejor_puntaje?: number | null;
+  intentos_count?: number;
 }
 
 interface AttendeeFormEntry {
