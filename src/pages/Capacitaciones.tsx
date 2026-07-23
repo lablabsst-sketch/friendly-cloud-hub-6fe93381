@@ -1241,6 +1241,12 @@ export default function Capacitaciones() {
                         {!signed && a.telefono_whatsapp && (
                           <p className="text-[10px] text-muted-foreground">📱 {a.telefono_whatsapp}</p>
                         )}
+                        {a.mejor_puntaje != null && (
+                          <p className="text-[10px] text-indigo-600 font-medium">
+                            📝 Evaluación: {a.mejor_puntaje}/100
+                            {(a.intentos_count ?? 0) > 1 && ` · ${a.intentos_count} intentos`}
+                          </p>
+                        )}
                       </div>
                       {/* Signature thumbnail */}
                       {signed && a.firma_url && (
