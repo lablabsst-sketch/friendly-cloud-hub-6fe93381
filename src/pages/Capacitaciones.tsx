@@ -1079,6 +1079,13 @@ export default function Capacitaciones() {
                 </p>
               )}
             </TabsContent>
+
+            {/* ── Evaluación tab ── */}
+            {editing && empresa?.id && (
+              <TabsContent value="evaluacion" className="flex-1 overflow-y-auto mt-4 pr-1">
+                <EvaluacionEditor capacitacionId={editing.id} empresaId={empresa.id} />
+              </TabsContent>
+            )}
           </Tabs>
 
           <DialogFooter className="mt-4">
