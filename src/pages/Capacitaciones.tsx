@@ -1172,6 +1172,31 @@ export default function Capacitaciones() {
         </DialogContent>
       </Dialog>
 
+      <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Descartar cambios de la evaluación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hay preguntas modificadas que no se han guardado. Si cierras ahora, se perderán.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Seguir editando</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-[#DC2626] text-white hover:bg-[#B91C1C]"
+              onClick={() => {
+                setEvalDirty(false);
+                setConfirmCloseOpen(false);
+                setFormOpen(false);
+              }}
+            >
+              Descartar cambios
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       {/* ─── Detail / Attendance Dialog ───────────────────────────────────────── */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
