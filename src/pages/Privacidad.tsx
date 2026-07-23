@@ -1,13 +1,10 @@
 import { Link } from "react-router-dom";
 import { ShieldCheck, Mail, ArrowLeft } from "lucide-react";
 import logoSstlink from "@/assets/logo-sstlink.png";
+import { POLICY_VERSION, POLICY_VIGENCIA } from "@/lib/habeasData";
 
 export default function Privacidad() {
-  const vigencia = new Date().toLocaleDateString("es-CO", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const vigencia = POLICY_VIGENCIA;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -40,6 +37,9 @@ export default function Privacidad() {
             </h1>
             <p className="text-xs text-[#64748B] mt-0.5">
               Conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013 de la República de Colombia
+            </p>
+            <p className="text-[11px] text-[#94A3B8] mt-1">
+              Versión <strong>{POLICY_VERSION}</strong> · Vigente desde el {vigencia}
             </p>
           </div>
         </div>

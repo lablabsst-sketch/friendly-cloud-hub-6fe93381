@@ -553,6 +553,53 @@ export type Database = {
           },
         ]
       }
+      consentimientos_habeas_data: {
+        Row: {
+          aceptado_en: string
+          created_at: string
+          empresa_id: string | null
+          id: string
+          ip: unknown
+          titular_id: string | null
+          titular_tipo: string
+          user_agent: string | null
+          user_id: string | null
+          version_politica: string
+        }
+        Insert: {
+          aceptado_en?: string
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          ip?: unknown
+          titular_id?: string | null
+          titular_tipo: string
+          user_agent?: string | null
+          user_id?: string | null
+          version_politica: string
+        }
+        Update: {
+          aceptado_en?: string
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          ip?: unknown
+          titular_id?: string | null
+          titular_tipo?: string
+          user_agent?: string | null
+          user_id?: string | null
+          version_politica?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consentimientos_habeas_data_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratistas: {
         Row: {
           contacto: string | null
