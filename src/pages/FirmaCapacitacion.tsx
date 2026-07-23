@@ -331,26 +331,28 @@ export default function FirmaCapacitacion() {
 
           {/* ── Done ── */}
           {step === "done" && (
-            <Card>
-              <CardContent className="py-16 flex flex-col items-center gap-4 text-center">
-                <div className="rounded-full bg-green-100 p-4">
-                  <CheckCircle2 className="h-10 w-10 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-lg text-green-700">¡Asistencia confirmada!</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Tu firma ha sido registrada exitosamente.<br />
-                    Puedes cerrar esta ventana.
-                  </p>
-                </div>
-                {asistencia && (
-                  <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-2">
-                    <strong>{asistencia.capacitacion.titulo}</strong><br />
-                    {formatFecha(asistencia.capacitacion.fecha)}
+            <>
+              <Card>
+                <CardContent className="py-10 flex flex-col items-center gap-4 text-center">
+                  <div className="rounded-full bg-green-100 p-4">
+                    <CheckCircle2 className="h-10 w-10 text-green-600" />
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <div>
+                    <p className="font-semibold text-lg text-green-700">¡Asistencia confirmada!</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Tu firma ha sido registrada exitosamente.
+                    </p>
+                  </div>
+                  {asistencia && (
+                    <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-2">
+                      <strong>{asistencia.capacitacion.titulo}</strong><br />
+                      {formatFecha(asistencia.capacitacion.fecha)}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              {token && <EvaluacionQuiz firmaToken={token} />}
+            </>
           )}
         </div>
       </main>
