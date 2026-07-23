@@ -920,6 +920,11 @@ export default function Capacitaciones() {
                 <Users className="h-3.5 w-3.5 mr-1.5" />
                 Convocatoria {selectedCount > 0 && <Badge variant="secondary" className="ml-1.5 h-4 text-[10px]">{selectedCount}</Badge>}
               </TabsTrigger>
+              {editing && (
+                <TabsTrigger value="evaluacion" className="flex-1">
+                  <ClipboardList className="h-3.5 w-3.5 mr-1.5" />Evaluación
+                </TabsTrigger>
+              )}
             </TabsList>
 
             {/* ── Info tab ── */}
