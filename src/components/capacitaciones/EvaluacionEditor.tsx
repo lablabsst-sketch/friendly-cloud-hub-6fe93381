@@ -38,7 +38,9 @@ interface Draft {
 interface Props {
   capacitacionId: string;
   empresaId: string;
+  onDirtyChange?: (dirty: boolean) => void;
 }
+
 
 // Small helper: table types are behind — use `as any` on the from() call locally.
 const db = supabase as any;
