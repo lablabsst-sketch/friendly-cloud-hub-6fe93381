@@ -1629,6 +1629,36 @@ export type Database = {
           },
         ]
       }
+      politicas_privacidad: {
+        Row: {
+          activa: boolean
+          created_at: string
+          id: string
+          titulo: string
+          updated_at: string
+          version: string
+          vigencia_desde: string
+        }
+        Insert: {
+          activa?: boolean
+          created_at?: string
+          id?: string
+          titulo?: string
+          updated_at?: string
+          version: string
+          vigencia_desde: string
+        }
+        Update: {
+          activa?: boolean
+          created_at?: string
+          id?: string
+          titulo?: string
+          updated_at?: string
+          version?: string
+          vigencia_desde?: string
+        }
+        Relationships: []
+      }
       proveedores: {
         Row: {
           arl: string | null
