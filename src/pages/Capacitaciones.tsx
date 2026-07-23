@@ -1199,7 +1199,33 @@ export default function Capacitaciones() {
             )}
           </div>
 
+          {/* Link general de firma */}
+          <div className="rounded-lg border border-dashed border-indigo-200 bg-indigo-50/50 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold text-indigo-900 flex items-center gap-1.5">
+                  <Link2 className="h-3.5 w-3.5" /> Link general de firma
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Un mismo enlace para toda la capacitación. Cada asistente ingresa su cédula para firmar.
+                </p>
+              </div>
+              {!linkGeneral && (
+                <Button size="sm" variant="outline" className="text-xs h-8" onClick={generarLinkGeneral} disabled={generatingLink}>
+                  {generatingLink ? "Generando…" : "Generar link"}
+                </Button>
+              )}
+            </div>
+            {linkGeneral && (
+              <div className="flex items-center gap-2">
+                <Input readOnly value={linkGeneral} className="text-xs h-8 bg-white" onFocus={(e) => e.currentTarget.select()} />
+                <Button size="sm" variant="outline" className="text-xs h-8" onClick={copyLinkGeneral}>Copiar</Button>
+              </div>
+            )}
+          </div>
+
           <Separator />
+
 
           {/* Attendee list */}
           {loadingDetail ? (
