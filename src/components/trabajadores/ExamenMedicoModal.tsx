@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Paperclip, Loader2 } from "lucide-react";
+import { registrarConsentimiento } from "@/lib/habeasData";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface ExamenMedicoRecord {
   id: string;
@@ -41,6 +43,7 @@ const empty = {
 
 export function ExamenMedicoModal({ open, onOpenChange, empresaId, trabajadorId, editing, onSaved }: Props) {
   const { toast } = useToast();
+  const { user: authUser } = useAuth();
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -106,6 +109,14 @@ export function ExamenMedicoModal({ open, onOpenChange, empresaId, trabajadorId,
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
+    }
+    if (!editing) {
+      await registrarConsentimiento({
+        userId: authUser?.id ?? null,
+        empresaId,
+        titularTipo: "trabajador",
+        titularId: trabajadorId,
+      });
     }
     toast({ title: editing ? "Examen actualizado" : "Examen registrado" });
     onOpenChange(false);

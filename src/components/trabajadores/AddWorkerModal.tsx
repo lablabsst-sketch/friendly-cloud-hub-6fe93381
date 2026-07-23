@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { registrarConsentimiento } from "@/lib/habeasData";
 
 interface WorkerData {
   id?: string;
@@ -208,7 +209,17 @@ export function AddWorkerModal({ open, onOpenChange, empresaId, onSuccess, editW
           const isUnique = (error as any).code === "23505";
           toast({ title: isUnique ? "Ya existe un trabajador con esta cédula en tu empresa" : "Error al guardar", description: isUnique ? undefined : error.message, variant: "destructive" });
         }
-        else { toast({ title: `${form.nombres.trim()} agregado correctamente.` }); onOpenChange(false); setForm(emptyForm); onSuccess(data); }
+        else {
+          if (data?.id) {
+            await registrarConsentimiento({
+              userId: authUser?.id ?? null,
+              empresaId: resolvedEmpresaId,
+              titularTipo: "trabajador",
+              titularId: data.id,
+            });
+          }
+          toast({ title: `${form.nombres.trim()} agregado correctamente.` }); onOpenChange(false); setForm(emptyForm); onSuccess(data);
+        }
       }
 
     } catch (err: any) {

@@ -238,6 +238,13 @@ export default function Register() {
         }
       } catch { /* no-op */ }
 
+      await registrarConsentimiento({
+        userId: authUserId,
+        empresaId: empresaData.id,
+        titularTipo: "usuario",
+        titularId: authUserId,
+      });
+
       setSuccess(true);
     } catch (err: any) {
       const { title, description } = describeAuthError(err);
@@ -285,6 +292,12 @@ export default function Register() {
       const { error: rpcErr } = await (supabase as any).rpc("accept_invitation", { p_token: invToken });
       if (rpcErr) throw new Error(rpcErr.message || "La invitación ya no es válida.");
 
+
+      await registrarConsentimiento({
+        userId: authUserId,
+        titularTipo: "usuario",
+        titularId: authUserId,
+      });
 
       setSuccess(true);
     } catch (err: any) {
@@ -367,6 +380,13 @@ export default function Register() {
             });
           }
         } catch { /* no-op */ }
+
+        await registrarConsentimiento({
+          userId: authUserId,
+          empresaId: empresaCreada.id,
+          titularTipo: "usuario",
+          titularId: authUserId,
+        });
 
         setSuccess(true);
       } catch (err: any) {
