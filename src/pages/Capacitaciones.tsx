@@ -32,6 +32,7 @@ import {
   GraduationCap, Plus, Pencil, Trash2, Users, Clock, CheckCircle2, BookOpen,
   ChevronRight, UserCheck, UserX, Monitor, Building2, Link2, MessageCircle,
   Send, FileText, Pen, CalendarDays, Info, Search, FileDown, Eye, Infinity as InfinityIcon,
+  ClipboardList,
 } from "lucide-react";
 import {
   enviarWhatsApp, mensajeInfoCapacitacion, mensajeFirmaCapacitacion,
@@ -40,6 +41,7 @@ import {
 import { useEmpresaPlan } from "@/hooks/useEmpresaPlan";
 import { canViewAll } from "@/lib/roles";
 import { exportActaCapacitacionPdf } from "@/lib/actaCapacitacionPdf";
+import { EvaluacionEditor } from "@/components/capacitaciones/EvaluacionEditor";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -95,6 +97,9 @@ interface AsistenciaRecord {
   // Joined
   trabajador?: { nombres: string; apellidos: string; cargo: string | null; numero_documento: string } | null;
   empleado?: { nombres: string; apellidos: string; cargo: string | null; numero_documento: string } | null;
+  // Derived: mejor puntaje de evaluacion_intentos
+  mejor_puntaje?: number | null;
+  intentos_count?: number;
 }
 
 interface AttendeeFormEntry {
@@ -566,7 +571,35 @@ export default function Capacitaciones() {
         .order("created_at", { ascending: true })
     );
 
-    setAsistencias(data ?? []);
+    const base = data ?? [];
+
+    // Fetch evaluacion intentos to compute best score per asistencia
+    const asisIds = base.map((a) => a.id);
+    const scoreMap: Record<string, { mejor: number; count: number }> = {};
+    if (asisIds.length > 0) {
+      const { data: intentos } = await runQuery<Array<{ asistencia_id: string; puntaje: number }>>(
+        (supabase as unknown as { from: (t: string) => { select: (s: string) => { in: (c: string, v: string[]) => PromiseLike<{ data: unknown; error: unknown }> } } })
+          .from("evaluacion_intentos")
+          .select("asistencia_id, puntaje")
+          .in("asistencia_id", asisIds)
+      );
+      for (const row of intentos ?? []) {
+        const cur = scoreMap[row.asistencia_id];
+        if (!cur) scoreMap[row.asistencia_id] = { mejor: Number(row.puntaje), count: 1 };
+        else {
+          cur.count += 1;
+          if (Number(row.puntaje) > cur.mejor) cur.mejor = Number(row.puntaje);
+        }
+      }
+    }
+
+    setAsistencias(
+      base.map((a) => ({
+        ...a,
+        mejor_puntaje: scoreMap[a.id]?.mejor ?? null,
+        intentos_count: scoreMap[a.id]?.count ?? 0,
+      }))
+    );
   };
 
   const toggleAsistio = async (asistencia: AsistenciaRecord, value: boolean) => {
@@ -688,7 +721,7 @@ export default function Capacitaciones() {
           asistio: a.asistio ?? false,
           firma_url: a.firma_url ?? null,
           firmado_en: a.firmado_en ?? null,
-          nota: a.nota ?? null,
+          nota: a.mejor_puntaje ?? a.nota ?? null,
         })),
         empresa: { nombre: empresa.nombre ?? "Empresa", nit: empresa.nit ?? null },
       });
@@ -887,6 +920,11 @@ export default function Capacitaciones() {
                 <Users className="h-3.5 w-3.5 mr-1.5" />
                 Convocatoria {selectedCount > 0 && <Badge variant="secondary" className="ml-1.5 h-4 text-[10px]">{selectedCount}</Badge>}
               </TabsTrigger>
+              {editing && (
+                <TabsTrigger value="evaluacion" className="flex-1">
+                  <ClipboardList className="h-3.5 w-3.5 mr-1.5" />Evaluación
+                </TabsTrigger>
+              )}
             </TabsList>
 
             {/* ── Info tab ── */}
@@ -1041,6 +1079,13 @@ export default function Capacitaciones() {
                 </p>
               )}
             </TabsContent>
+
+            {/* ── Evaluación tab ── */}
+            {editing && empresa?.id && (
+              <TabsContent value="evaluacion" className="flex-1 overflow-y-auto mt-4 pr-1">
+                <EvaluacionEditor capacitacionId={editing.id} empresaId={empresa.id} />
+              </TabsContent>
+            )}
           </Tabs>
 
           <DialogFooter className="mt-4">
@@ -1195,6 +1240,12 @@ export default function Capacitaciones() {
                         )}
                         {!signed && a.telefono_whatsapp && (
                           <p className="text-[10px] text-muted-foreground">📱 {a.telefono_whatsapp}</p>
+                        )}
+                        {a.mejor_puntaje != null && (
+                          <p className="text-[10px] text-indigo-600 font-medium">
+                            📝 Evaluación: {a.mejor_puntaje}/100
+                            {(a.intentos_count ?? 0) > 1 && ` · ${a.intentos_count} intentos`}
+                          </p>
                         )}
                       </div>
                       {/* Signature thumbnail */}

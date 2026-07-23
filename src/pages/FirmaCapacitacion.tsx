@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import SignaturePad, { SignaturePadHandle } from "@/components/capacitaciones/SignaturePad";
+import { EvaluacionQuiz } from "@/components/capacitaciones/EvaluacionQuiz";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -203,21 +204,24 @@ export default function FirmaCapacitacion() {
 
           {/* ── Already signed ── */}
           {step === "already_signed" && asistencia && (
-            <Card>
-              <CardContent className="py-12 flex flex-col items-center gap-3 text-center">
-                <div className="rounded-full bg-green-100 p-3">
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
-                </div>
-                <p className="font-semibold text-green-700">Ya firmaste esta capacitación</p>
-                <p className="text-sm text-muted-foreground">
-                  <strong>{asistencia.capacitacion.titulo}</strong><br />
-                  Tu asistencia fue confirmada el{" "}
-                  {asistencia.firmado_en
-                    ? new Date(asistencia.firmado_en).toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" })
-                    : ""}
-                </p>
-              </CardContent>
-            </Card>
+            <>
+              <Card>
+                <CardContent className="py-8 flex flex-col items-center gap-3 text-center">
+                  <div className="rounded-full bg-green-100 p-3">
+                    <CheckCircle2 className="h-8 w-8 text-green-600" />
+                  </div>
+                  <p className="font-semibold text-green-700">Ya firmaste esta capacitación</p>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>{asistencia.capacitacion.titulo}</strong><br />
+                    Tu asistencia fue confirmada el{" "}
+                    {asistencia.firmado_en
+                      ? new Date(asistencia.firmado_en).toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" })
+                      : ""}
+                  </p>
+                </CardContent>
+              </Card>
+              {token && <EvaluacionQuiz firmaToken={token} />}
+            </>
           )}
 
           {/* ── Verify ── */}
@@ -327,26 +331,28 @@ export default function FirmaCapacitacion() {
 
           {/* ── Done ── */}
           {step === "done" && (
-            <Card>
-              <CardContent className="py-16 flex flex-col items-center gap-4 text-center">
-                <div className="rounded-full bg-green-100 p-4">
-                  <CheckCircle2 className="h-10 w-10 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-lg text-green-700">¡Asistencia confirmada!</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Tu firma ha sido registrada exitosamente.<br />
-                    Puedes cerrar esta ventana.
-                  </p>
-                </div>
-                {asistencia && (
-                  <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-2">
-                    <strong>{asistencia.capacitacion.titulo}</strong><br />
-                    {formatFecha(asistencia.capacitacion.fecha)}
+            <>
+              <Card>
+                <CardContent className="py-10 flex flex-col items-center gap-4 text-center">
+                  <div className="rounded-full bg-green-100 p-4">
+                    <CheckCircle2 className="h-10 w-10 text-green-600" />
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <div>
+                    <p className="font-semibold text-lg text-green-700">¡Asistencia confirmada!</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Tu firma ha sido registrada exitosamente.
+                    </p>
+                  </div>
+                  {asistencia && (
+                    <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-2">
+                      <strong>{asistencia.capacitacion.titulo}</strong><br />
+                      {formatFecha(asistencia.capacitacion.fecha)}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              {token && <EvaluacionQuiz firmaToken={token} />}
+            </>
           )}
         </div>
       </main>
