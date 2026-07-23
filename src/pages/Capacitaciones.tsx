@@ -970,7 +970,7 @@ export default function Capacitaciones() {
       </div>
 
       {/* ─── Create / Edit Dialog ─────────────────────────────────────────────── */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+      <Dialog open={formOpen} onOpenChange={requestCloseForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar capacitación" : "Nueva capacitación"}</DialogTitle>
