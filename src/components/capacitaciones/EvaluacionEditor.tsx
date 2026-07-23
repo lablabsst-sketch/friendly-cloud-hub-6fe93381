@@ -81,6 +81,13 @@ export function EvaluacionEditor({ capacitacionId, empresaId, onDirtyChange }: P
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [capacitacionId]);
 
+  useEffect(() => {
+    onDirtyChange?.(items.some((it) => it.dirty));
+  }, [items, onDirtyChange]);
+
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
+
+
   const addPregunta = (tipo: Tipo) => {
     setItems((prev) => [
       ...prev,
