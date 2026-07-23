@@ -553,9 +553,36 @@ export default function Capacitaciones() {
   const openDetail = async (cap: Capacitacion) => {
     setSelectedCap(cap);
     setDetailOpen(true);
+    setLinkGeneral(null);
     setLoadingDetail(true);
     await loadAsistencias(cap.id);
     setLoadingDetail(false);
+  };
+
+  const generarLinkGeneral = async () => {
+    if (!selectedCap) return;
+    setGeneratingLink(true);
+    try {
+      const { data, error } = await (supabase as any).rpc("generar_link_capacitacion", {
+        p_capacitacion_id: selectedCap.id,
+      });
+      if (error) throw error;
+      const url = `${window.location.origin}/firma-capacitacion?c=${data}`;
+      setLinkGeneral(url);
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message ?? "No se pudo generar el link", variant: "destructive" });
+    }
+    setGeneratingLink(false);
+  };
+
+  const copyLinkGeneral = async () => {
+    if (!linkGeneral) return;
+    try {
+      await navigator.clipboard.writeText(linkGeneral);
+      toast({ title: "Link copiado", description: "Pégalo en el grupo de WhatsApp o proyéctalo." });
+    } catch {
+      toast({ title: "No se pudo copiar", variant: "destructive" });
+    }
   };
 
   const loadAsistencias = async (capId: string) => {
