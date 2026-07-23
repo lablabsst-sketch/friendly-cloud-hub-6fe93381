@@ -204,21 +204,24 @@ export default function FirmaCapacitacion() {
 
           {/* ── Already signed ── */}
           {step === "already_signed" && asistencia && (
-            <Card>
-              <CardContent className="py-12 flex flex-col items-center gap-3 text-center">
-                <div className="rounded-full bg-green-100 p-3">
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
-                </div>
-                <p className="font-semibold text-green-700">Ya firmaste esta capacitación</p>
-                <p className="text-sm text-muted-foreground">
-                  <strong>{asistencia.capacitacion.titulo}</strong><br />
-                  Tu asistencia fue confirmada el{" "}
-                  {asistencia.firmado_en
-                    ? new Date(asistencia.firmado_en).toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" })
-                    : ""}
-                </p>
-              </CardContent>
-            </Card>
+            <>
+              <Card>
+                <CardContent className="py-8 flex flex-col items-center gap-3 text-center">
+                  <div className="rounded-full bg-green-100 p-3">
+                    <CheckCircle2 className="h-8 w-8 text-green-600" />
+                  </div>
+                  <p className="font-semibold text-green-700">Ya firmaste esta capacitación</p>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>{asistencia.capacitacion.titulo}</strong><br />
+                    Tu asistencia fue confirmada el{" "}
+                    {asistencia.firmado_en
+                      ? new Date(asistencia.firmado_en).toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" })
+                      : ""}
+                  </p>
+                </CardContent>
+              </Card>
+              {token && <EvaluacionQuiz firmaToken={token} />}
+            </>
           )}
 
           {/* ── Verify ── */}
