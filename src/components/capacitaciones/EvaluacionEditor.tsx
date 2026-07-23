@@ -45,7 +45,7 @@ interface Props {
 // Small helper: table types are behind — use `as any` on the from() call locally.
 const db = supabase as any;
 
-export function EvaluacionEditor({ capacitacionId, empresaId }: Props) {
+export function EvaluacionEditor({ capacitacionId, empresaId, onDirtyChange }: Props) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
