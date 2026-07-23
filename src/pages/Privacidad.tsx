@@ -53,7 +53,7 @@ export default function Privacidad() {
               Conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013 de la República de Colombia
             </p>
             <p className="text-[11px] text-[#94A3B8] mt-1">
-              Versión <strong>{POLICY_VERSION}</strong> · Vigente desde el {vigencia}
+              Versión <strong>{version}</strong> · Vigente desde el {vigencia}
             </p>
           </div>
         </div>
