@@ -261,6 +261,8 @@ export default function Capacitaciones() {
 
   // Detail/attendance dialog
   const [detailOpen, setDetailOpen] = useState(false);
+  const [linkGeneral, setLinkGeneral] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
   const [selectedCap, setSelectedCap] = useState<Capacitacion | null>(null);
   const [asistencias, setAsistencias] = useState<AsistenciaRecord[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -551,9 +553,36 @@ export default function Capacitaciones() {
   const openDetail = async (cap: Capacitacion) => {
     setSelectedCap(cap);
     setDetailOpen(true);
+    setLinkGeneral(null);
     setLoadingDetail(true);
     await loadAsistencias(cap.id);
     setLoadingDetail(false);
+  };
+
+  const generarLinkGeneral = async () => {
+    if (!selectedCap) return;
+    setGeneratingLink(true);
+    try {
+      const { data, error } = await (supabase as any).rpc("generar_link_capacitacion", {
+        p_capacitacion_id: selectedCap.id,
+      });
+      if (error) throw error;
+      const url = `${window.location.origin}/firma-capacitacion?c=${data}`;
+      setLinkGeneral(url);
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message ?? "No se pudo generar el link", variant: "destructive" });
+    }
+    setGeneratingLink(false);
+  };
+
+  const copyLinkGeneral = async () => {
+    if (!linkGeneral) return;
+    try {
+      await navigator.clipboard.writeText(linkGeneral);
+      toast({ title: "Link copiado", description: "Pégalo en el grupo de WhatsApp o proyéctalo." });
+    } catch {
+      toast({ title: "No se pudo copiar", variant: "destructive" });
+    }
   };
 
   const loadAsistencias = async (capId: string) => {
@@ -1170,7 +1199,33 @@ export default function Capacitaciones() {
             )}
           </div>
 
+          {/* Link general de firma */}
+          <div className="rounded-lg border border-dashed border-indigo-200 bg-indigo-50/50 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold text-indigo-900 flex items-center gap-1.5">
+                  <Link2 className="h-3.5 w-3.5" /> Link general de firma
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Un mismo enlace para toda la capacitación. Cada asistente ingresa su cédula para firmar.
+                </p>
+              </div>
+              {!linkGeneral && (
+                <Button size="sm" variant="outline" className="text-xs h-8" onClick={generarLinkGeneral} disabled={generatingLink}>
+                  {generatingLink ? "Generando…" : "Generar link"}
+                </Button>
+              )}
+            </div>
+            {linkGeneral && (
+              <div className="flex items-center gap-2">
+                <Input readOnly value={linkGeneral} className="text-xs h-8 bg-white" onFocus={(e) => e.currentTarget.select()} />
+                <Button size="sm" variant="outline" className="text-xs h-8" onClick={copyLinkGeneral}>Copiar</Button>
+              </div>
+            )}
+          </div>
+
           <Separator />
+
 
           {/* Attendee list */}
           {loadingDetail ? (

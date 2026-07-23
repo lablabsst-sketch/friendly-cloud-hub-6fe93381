@@ -409,6 +409,7 @@ export type Database = {
           firma_token: string | null
           id: string
           link_reunion: string | null
+          link_token: string | null
           modalidad: string | null
           responsable: string | null
           tipo: string | null
@@ -427,6 +428,7 @@ export type Database = {
           firma_token?: string | null
           id?: string
           link_reunion?: string | null
+          link_token?: string | null
           modalidad?: string | null
           responsable?: string | null
           tipo?: string | null
@@ -445,6 +447,7 @@ export type Database = {
           firma_token?: string | null
           id?: string
           link_reunion?: string | null
+          link_token?: string | null
           modalidad?: string | null
           responsable?: string | null
           tipo?: string | null
@@ -2390,6 +2393,14 @@ export type Database = {
         Args: { p_name: string }
         Returns: string
       }
+      generar_link_capacitacion: {
+        Args: { p_capacitacion_id: string }
+        Returns: string
+      }
+      get_capacitacion_by_link_token: {
+        Args: { p_link_token: string }
+        Returns: Json
+      }
       get_cumplimiento_phva: { Args: { p_empresa_id: string }; Returns: Json }
       get_evaluacion_by_firma_token: {
         Args: { p_firma_token: string }
@@ -2437,6 +2448,10 @@ export type Database = {
         Returns: undefined
       }
       normalize_nit: { Args: { p_nit: string }; Returns: string }
+      registrar_asistencia_por_cedula: {
+        Args: { p_link_token: string; p_numero_documento: string }
+        Returns: Json
+      }
       registrar_intento_evaluacion: {
         Args: { p_firma_token: string; p_respuestas: Json }
         Returns: Json
