@@ -22,6 +22,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose,
 } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkeletonRows } from "@/components/SkeletonRows";
@@ -250,6 +255,17 @@ export default function Capacitaciones() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [formTab, setFormTab] = useState("info");
+  const [evalDirty, setEvalDirty] = useState(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+
+  const requestCloseForm = (open: boolean) => {
+    if (!open && evalDirty) {
+      setConfirmCloseOpen(true);
+      return;
+    }
+    setFormOpen(open);
+  };
+
 
   // Attendee selection in form
   const [attendeeEntries, setAttendeeEntries] = useState<AttendeeFormEntry[]>([]);
@@ -959,7 +975,7 @@ export default function Capacitaciones() {
       </div>
 
       {/* ─── Create / Edit Dialog ─────────────────────────────────────────────── */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+      <Dialog open={formOpen} onOpenChange={requestCloseForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar capacitación" : "Nueva capacitación"}</DialogTitle>
@@ -1142,19 +1158,44 @@ export default function Capacitaciones() {
             {/* ── Evaluación tab ── */}
             {editing && empresa?.id && (
               <TabsContent value="evaluacion" className="flex-1 overflow-y-auto mt-4 pr-1">
-                <EvaluacionEditor capacitacionId={editing.id} empresaId={empresa.id} />
+                <EvaluacionEditor capacitacionId={editing.id} empresaId={empresa.id} onDirtyChange={setEvalDirty} />
               </TabsContent>
             )}
           </Tabs>
 
           <DialogFooter className="mt-4">
-            <DialogClose asChild><Button variant="outline" size="sm">Cancelar</Button></DialogClose>
+            <Button variant="outline" size="sm" onClick={() => requestCloseForm(false)}>Cancelar</Button>
             <Button size="sm" onClick={save} disabled={saving || !form.titulo || !form.fecha}>
               {saving ? "Guardando…" : editing ? "Guardar cambios" : "Crear capacitación"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Descartar cambios de la evaluación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hay preguntas modificadas que no se han guardado. Si cierras ahora, se perderán.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Seguir editando</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-[#DC2626] text-white hover:bg-[#B91C1C]"
+              onClick={() => {
+                setEvalDirty(false);
+                setConfirmCloseOpen(false);
+                setFormOpen(false);
+              }}
+            >
+              Descartar cambios
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* ─── Detail / Attendance Dialog ───────────────────────────────────────── */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
