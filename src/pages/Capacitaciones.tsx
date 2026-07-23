@@ -1159,7 +1159,7 @@ export default function Capacitaciones() {
           </Tabs>
 
           <DialogFooter className="mt-4">
-            <DialogClose asChild><Button variant="outline" size="sm">Cancelar</Button></DialogClose>
+            <Button variant="outline" size="sm" onClick={() => requestCloseForm(false)}>Cancelar</Button>
             <Button size="sm" onClick={save} disabled={saving || !form.titulo || !form.fecha}>
               {saving ? "Guardando…" : editing ? "Guardar cambios" : "Crear capacitación"}
             </Button>
