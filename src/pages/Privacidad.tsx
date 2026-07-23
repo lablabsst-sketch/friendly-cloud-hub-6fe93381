@@ -1,10 +1,24 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Mail, ArrowLeft } from "lucide-react";
 import logoSstlink from "@/assets/logo-sstlink.png";
-import { POLICY_VERSION, POLICY_VIGENCIA } from "@/lib/habeasData";
+import {
+  getActivePolicy,
+  getVigenciaFormatted,
+  POLICY_VERSION_FALLBACK,
+  POLICY_VIGENCIA_FALLBACK,
+  type PoliticaPrivacidad,
+} from "@/lib/habeasData";
 
 export default function Privacidad() {
-  const vigencia = POLICY_VIGENCIA;
+  const [policy, setPolicy] = useState<PoliticaPrivacidad | null>(null);
+
+  useEffect(() => {
+    getActivePolicy().then(setPolicy);
+  }, []);
+
+  const version = policy?.version ?? POLICY_VERSION_FALLBACK;
+  const vigencia = policy ? getVigenciaFormatted(policy) : POLICY_VIGENCIA_FALLBACK;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
