@@ -31,13 +31,15 @@ import { useToast } from "@/hooks/use-toast";
 import {
   GraduationCap, Plus, Pencil, Trash2, Users, Clock, CheckCircle2, BookOpen,
   ChevronRight, UserCheck, UserX, Monitor, Building2, Link2, MessageCircle,
-  Send, FileText, Pen, CalendarDays, Info, Search,
+  Send, FileText, Pen, CalendarDays, Info, Search, FileDown, Eye, Infinity as InfinityIcon,
 } from "lucide-react";
 import {
   enviarWhatsApp, mensajeInfoCapacitacion, mensajeFirmaCapacitacion,
   generarPDFAsistencia,
 } from "@/lib/whatsapp";
 import { useEmpresaPlan } from "@/hooks/useEmpresaPlan";
+import { canViewAll } from "@/lib/roles";
+import { exportActaCapacitacionPdf } from "@/lib/actaCapacitacionPdf";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,6 +49,7 @@ interface Capacitacion {
   titulo: string;
   descripcion: string | null;
   fecha: string;
+  fecha_cierre: string | null;
   tipo: string | null;
   duracion_horas: number | null;
   responsable: string | null;
@@ -111,18 +114,36 @@ const TIPOS = [
   "Riesgo biológico", "Ergonomía", "Salud mental", "SG-SST general", "Otro",
 ];
 
+// Estados derivados a partir de fechas (para listado y filtro admin)
+type EstadoCalc = "programada" | "abierta" | "cerrada";
+
+const ESTADO_CALC_LABEL: Record<EstadoCalc, string> = {
+  programada: "Programada",
+  abierta: "Abierta",
+  cerrada: "Cerrada",
+};
+
+const ESTADO_CALC_BADGE: Record<EstadoCalc, string> = {
+  programada: "bg-blue-100 text-blue-800",
+  abierta: "bg-emerald-100 text-emerald-800",
+  cerrada: "bg-slate-200 text-slate-600",
+};
+
+function estadoCalculado(c: Pick<Capacitacion, "fecha" | "fecha_cierre">): EstadoCalc {
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const inicio = new Date(c.fecha + "T00:00:00");
+  if (inicio.getTime() > hoy.getTime()) return "programada";
+  if (!c.fecha_cierre) return "abierta";
+  const cierre = new Date(c.fecha_cierre + "T23:59:59");
+  return cierre.getTime() < hoy.getTime() ? "cerrada" : "abierta";
+}
+
+// Estados almacenados (para el formulario de edición)
 const ESTADOS: Record<string, string> = {
   programada: "Programada",
   en_progreso: "En progreso",
   completada: "Completada",
   cancelada: "Cancelada",
-};
-
-const ESTADO_BADGE: Record<string, string> = {
-  programada:  "bg-blue-100 text-blue-800",
-  en_progreso: "bg-yellow-100 text-yellow-800",
-  completada:  "bg-green-100 text-green-800",
-  cancelada:   "bg-gray-100 text-gray-600",
 };
 
 const currentYear = new Date().getFullYear();
@@ -141,6 +162,7 @@ const emptyForm = {
   titulo: "",
   descripcion: "",
   fecha: new Date().toISOString().slice(0, 10),
+  fecha_cierre: "",
   tipo: "SG-SST general",
   duracion_horas: 1,
   responsable: "",
@@ -200,14 +222,16 @@ const getAttendeeDoc = (a: AsistenciaRecord): string => {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Capacitaciones() {
-  const { empresa } = useAuth();
+  const { empresa, usuario } = useAuth();
   const { toast } = useToast();
   const plan = useEmpresaPlan();
+  const canDownloadEvidence = canViewAll(usuario?.rol);
 
   // Data
   const [caps, setCaps] = useState<Capacitacion[]>([]);
   const [trabajadores, setTrabajadores] = useState<Trabajador[]>([]);
   const [contratistas, setContratistas] = useState<EmpleadoContratista[]>([]);
+  const [asistentesCount, setAsistentesCount] = useState<Record<string, { total: number; firmados: number }>>({});
   const [loading, setLoading] = useState(true);
 
   // Filters
@@ -267,6 +291,29 @@ export default function Capacitaciones() {
     setCaps(cs ?? []);
     setTrabajadores(ts ?? []);
     setContratistas(ecs ?? []);
+
+    // Conteo de asistentes (total y firmados) por capacitación
+    const capIds = (cs ?? []).map((c) => c.id);
+    if (capIds.length > 0) {
+      const { data: asis } = await runQuery<Array<{ capacitacion_id: string; firma_url: string | null }>>(
+        supabase
+          .from("asistencia_capacitacion")
+          .select("capacitacion_id, firma_url")
+          .in("capacitacion_id", capIds)
+      );
+      const counts: Record<string, { total: number; firmados: number }> = {};
+      for (const id of capIds) counts[id] = { total: 0, firmados: 0 };
+      for (const row of asis ?? []) {
+        const c = counts[row.capacitacion_id];
+        if (!c) continue;
+        c.total += 1;
+        if (row.firma_url) c.firmados += 1;
+      }
+      setAsistentesCount(counts);
+    } else {
+      setAsistentesCount({});
+    }
+
     setLoading(false);
   }, [empresa?.id]);
 
@@ -276,10 +323,11 @@ export default function Capacitaciones() {
 
   const filtered = caps.filter((c) => {
     const d = new Date(c.fecha);
+    const est = estadoCalculado(c);
     return (
       String(d.getFullYear()) === filterYear &&
       (filterMonth === "all" || String(d.getMonth() + 1) === filterMonth) &&
-      (filterEstado === "all" || c.estado === filterEstado)
+      (filterEstado === "all" || est === filterEstado)
     );
   });
 
@@ -340,6 +388,7 @@ export default function Capacitaciones() {
       titulo: c.titulo,
       descripcion: c.descripcion ?? "",
       fecha: c.fecha,
+      fecha_cierre: c.fecha_cierre ?? "",
       tipo: c.tipo ?? "SG-SST general",
       duracion_horas: c.duracion_horas ?? 1,
       responsable: c.responsable ?? "",
@@ -393,6 +442,7 @@ export default function Capacitaciones() {
       titulo: form.titulo,
       descripcion: form.descripcion || null,
       fecha: form.fecha,
+      fecha_cierre: form.fecha_cierre || null,
       tipo: form.tipo || null,
       duracion_horas: form.duracion_horas,
       responsable: form.responsable || null,
@@ -616,6 +666,40 @@ export default function Capacitaciones() {
     });
   };
 
+  const generateActa = async () => {
+    if (!selectedCap || !empresa) return;
+    try {
+      await exportActaCapacitacionPdf({
+        capacitacion: {
+          titulo: selectedCap.titulo,
+          fecha: selectedCap.fecha,
+          fecha_cierre: selectedCap.fecha_cierre,
+          tipo: selectedCap.tipo,
+          modalidad: selectedCap.modalidad,
+          responsable: selectedCap.responsable,
+          duracion_horas: selectedCap.duracion_horas,
+          descripcion: selectedCap.descripcion,
+        },
+        asistentes: asistencias.map((a) => ({
+          nombre: getAttendeeName(a),
+          numero_documento: getAttendeeDoc(a),
+          cargo: getAttendeeCargo(a),
+          tipo: a.tipo_asistente === "contratista" ? "contratista" : "trabajador",
+          asistio: a.asistio ?? false,
+          firma_url: a.firma_url ?? null,
+          firmado_en: a.firmado_en ?? null,
+          nota: a.nota ?? null,
+        })),
+        empresa: { nombre: empresa.nombre ?? "Empresa", nit: empresa.nit ?? null },
+      });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Error generando evidencia", description: (e as Error).message, variant: "destructive" });
+    }
+  };
+
+
+
   // ─── Attendee entry helpers ─────────────────────────────────────────────────
 
   const toggleAttendee = (idx: number) => {
@@ -687,7 +771,9 @@ export default function Capacitaciones() {
             <SelectTrigger className="w-40 h-8 text-sm"><SelectValue placeholder="Todos los estados" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los estados</SelectItem>
-              {Object.entries(ESTADOS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+              <SelectItem value="programada">Programada</SelectItem>
+              <SelectItem value="abierta">Abierta</SelectItem>
+              <SelectItem value="cerrada">Cerrada</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -711,15 +797,20 @@ export default function Capacitaciones() {
                     <TableRow>
                       <TableHead>Título</TableHead>
                       <TableHead>Tipo</TableHead>
-                      <TableHead>Fecha</TableHead>
                       <TableHead>Modalidad</TableHead>
-                      <TableHead>Duración</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Cierre</TableHead>
+                      <TableHead>Responsable</TableHead>
                       <TableHead>Estado</TableHead>
+                      <TableHead>Asistentes</TableHead>
                       <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map((c) => (
+                    {filtered.map((c) => {
+                      const est = estadoCalculado(c);
+                      const counts = asistentesCount[c.id] ?? { total: 0, firmados: 0 };
+                      return (
                       <TableRow
                         key={c.id}
                         className="cursor-pointer hover:bg-muted/40"
@@ -732,7 +823,6 @@ export default function Capacitaciones() {
                           </span>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{c.tipo ?? "—"}</TableCell>
-                        <TableCell className="text-sm">{new Date(c.fecha + "T12:00:00").toLocaleDateString("es-CO")}</TableCell>
                         <TableCell>
                           <span className="flex items-center gap-1 text-sm text-muted-foreground">
                             {c.modalidad === "virtual"
@@ -741,11 +831,25 @@ export default function Capacitaciones() {
                             <span className="capitalize">{c.modalidad}</span>
                           </span>
                         </TableCell>
-                        <TableCell className="text-sm">{c.duracion_horas ? `${c.duracion_horas}h` : "—"}</TableCell>
+                        <TableCell className="text-sm">{new Date(c.fecha + "T12:00:00").toLocaleDateString("es-CO")}</TableCell>
+                        <TableCell className="text-sm">
+                          {c.fecha_cierre ? (
+                            new Date(c.fecha_cierre + "T12:00:00").toLocaleDateString("es-CO")
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <InfinityIcon className="h-3 w-3" />Permanente
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{c.responsable ?? "—"}</TableCell>
                         <TableCell>
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ESTADO_BADGE[c.estado] ?? "bg-gray-100 text-gray-700"}`}>
-                            {ESTADOS[c.estado] ?? c.estado}
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ESTADO_CALC_BADGE[est]}`}>
+                            {ESTADO_CALC_LABEL[est]}
                           </span>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          <span className="text-foreground font-medium">{counts.firmados}</span>
+                          <span className="text-muted-foreground"> / {counts.total}</span>
                         </TableCell>
                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex justify-end gap-1">
@@ -758,7 +862,7 @@ export default function Capacitaciones() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    );})}
                   </TableBody>
                 </Table>
               </div>
@@ -816,6 +920,27 @@ export default function Capacitaciones() {
                   <div className="space-y-1.5">
                     <Label>Duración (horas)</Label>
                     <Input type="number" min={0.5} step={0.5} value={form.duracion_horas} onChange={(e) => setForm({ ...form, duracion_horas: parseFloat(e.target.value) || 1 })} />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="flex items-center gap-1.5">
+                    <CalendarDays className="h-3.5 w-3.5" />Fecha de cierre
+                    <span className="text-[10px] text-muted-foreground font-normal">
+                      (opcional · deja vacío para dejarla permanentemente abierta)
+                    </span>
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="date"
+                      value={form.fecha_cierre}
+                      min={form.fecha}
+                      onChange={(e) => setForm({ ...form, fecha_cierre: e.target.value })}
+                    />
+                    {form.fecha_cierre && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, fecha_cierre: "" })}>
+                        Quitar
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -988,6 +1113,16 @@ export default function Capacitaciones() {
               <FileText className="h-3.5 w-3.5" />
               PDF consolidado
             </Button>
+            {canDownloadEvidence && (
+              <Button
+                size="sm"
+                className="text-xs h-8 gap-1.5 bg-primary hover:bg-primary/90"
+                onClick={generateActa}
+              >
+                <FileDown className="h-3.5 w-3.5" />
+                Descargar evidencia (PDF)
+              </Button>
+            )}
           </div>
 
           <Separator />
@@ -1064,11 +1199,19 @@ export default function Capacitaciones() {
                       </div>
                       {/* Signature thumbnail */}
                       {signed && a.firma_url && (
-                        <img
-                          src={a.firma_url}
-                          alt="firma"
-                          className="h-10 w-20 object-contain border-b border-slate-300"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => window.open(a.firma_url!, "_blank", "noopener")}
+                          className="flex-shrink-0 group relative"
+                          title="Ver firma completa"
+                        >
+                          <img
+                            src={a.firma_url}
+                            alt="firma"
+                            className="h-10 w-20 object-contain border-b border-slate-300 group-hover:opacity-80"
+                          />
+                          <Eye className="absolute top-0 right-0 h-3 w-3 text-slate-500 opacity-0 group-hover:opacity-100" />
+                        </button>
                       )}
                       {!signed && (
                         <div className="h-10 w-20 border border-dashed border-slate-300 rounded flex items-center justify-center flex-shrink-0">
