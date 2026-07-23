@@ -1153,7 +1153,7 @@ export default function Capacitaciones() {
             {/* ── Evaluación tab ── */}
             {editing && empresa?.id && (
               <TabsContent value="evaluacion" className="flex-1 overflow-y-auto mt-4 pr-1">
-                <EvaluacionEditor capacitacionId={editing.id} empresaId={empresa.id} />
+                <EvaluacionEditor capacitacionId={editing.id} empresaId={empresa.id} onDirtyChange={setEvalDirty} />
               </TabsContent>
             )}
           </Tabs>
