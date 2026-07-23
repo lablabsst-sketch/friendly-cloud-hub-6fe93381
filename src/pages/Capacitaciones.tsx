@@ -571,7 +571,35 @@ export default function Capacitaciones() {
         .order("created_at", { ascending: true })
     );
 
-    setAsistencias(data ?? []);
+    const base = data ?? [];
+
+    // Fetch evaluacion intentos to compute best score per asistencia
+    const asisIds = base.map((a) => a.id);
+    const scoreMap: Record<string, { mejor: number; count: number }> = {};
+    if (asisIds.length > 0) {
+      const { data: intentos } = await runQuery<Array<{ asistencia_id: string; puntaje: number }>>(
+        (supabase as unknown as { from: (t: string) => { select: (s: string) => { in: (c: string, v: string[]) => PromiseLike<{ data: unknown; error: unknown }> } } })
+          .from("evaluacion_intentos")
+          .select("asistencia_id, puntaje")
+          .in("asistencia_id", asisIds)
+      );
+      for (const row of intentos ?? []) {
+        const cur = scoreMap[row.asistencia_id];
+        if (!cur) scoreMap[row.asistencia_id] = { mejor: Number(row.puntaje), count: 1 };
+        else {
+          cur.count += 1;
+          if (Number(row.puntaje) > cur.mejor) cur.mejor = Number(row.puntaje);
+        }
+      }
+    }
+
+    setAsistencias(
+      base.map((a) => ({
+        ...a,
+        mejor_puntaje: scoreMap[a.id]?.mejor ?? null,
+        intentos_count: scoreMap[a.id]?.count ?? 0,
+      }))
+    );
   };
 
   const toggleAsistio = async (asistencia: AsistenciaRecord, value: boolean) => {
