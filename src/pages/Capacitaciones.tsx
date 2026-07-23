@@ -1065,6 +1065,11 @@ export default function Capacitaciones() {
                   <Label>Descripción</Label>
                   <Textarea value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} rows={3} placeholder="Temas cubiertos, objetivos, lugar…" />
                 </div>
+                {!editing && (
+                  <p className="text-xs text-muted-foreground">
+                    La evaluación se habilita después de guardar la capacitación.
+                  </p>
+                )}
               </div>
             </TabsContent>
 
