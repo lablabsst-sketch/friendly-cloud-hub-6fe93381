@@ -32,6 +32,7 @@ import {
   GraduationCap, Plus, Pencil, Trash2, Users, Clock, CheckCircle2, BookOpen,
   ChevronRight, UserCheck, UserX, Monitor, Building2, Link2, MessageCircle,
   Send, FileText, Pen, CalendarDays, Info, Search, FileDown, Eye, Infinity as InfinityIcon,
+  ClipboardList,
 } from "lucide-react";
 import {
   enviarWhatsApp, mensajeInfoCapacitacion, mensajeFirmaCapacitacion,
@@ -40,6 +41,7 @@ import {
 import { useEmpresaPlan } from "@/hooks/useEmpresaPlan";
 import { canViewAll } from "@/lib/roles";
 import { exportActaCapacitacionPdf } from "@/lib/actaCapacitacionPdf";
+import { EvaluacionEditor } from "@/components/capacitaciones/EvaluacionEditor";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
