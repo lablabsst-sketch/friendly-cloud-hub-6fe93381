@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { StepIndicator } from "@/components/auth/StepIndicator";
 import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { z } from "zod";
+import { registrarConsentimiento } from "@/lib/habeasData";
 
 const STEPS = ["Empresa", "Administrador", "Detalles SST", "Confirmación"];
 
