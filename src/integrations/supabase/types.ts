@@ -1093,6 +1093,121 @@ export type Database = {
         }
         Relationships: []
       }
+      evaluacion_intentos: {
+        Row: {
+          asistencia_id: string
+          capacitacion_id: string
+          correctas: number
+          created_at: string
+          empresa_id: string
+          id: string
+          numero_intento: number
+          puntaje: number
+          respuestas: Json
+          total_preguntas: number
+        }
+        Insert: {
+          asistencia_id: string
+          capacitacion_id: string
+          correctas: number
+          created_at?: string
+          empresa_id: string
+          id?: string
+          numero_intento: number
+          puntaje: number
+          respuestas: Json
+          total_preguntas: number
+        }
+        Update: {
+          asistencia_id?: string
+          capacitacion_id?: string
+          correctas?: number
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          numero_intento?: number
+          puntaje?: number
+          respuestas?: Json
+          total_preguntas?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluacion_intentos_asistencia_id_fkey"
+            columns: ["asistencia_id"]
+            isOneToOne: false
+            referencedRelation: "asistencia_capacitacion"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluacion_intentos_capacitacion_id_fkey"
+            columns: ["capacitacion_id"]
+            isOneToOne: false
+            referencedRelation: "capacitaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluacion_intentos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluacion_preguntas: {
+        Row: {
+          capacitacion_id: string
+          created_at: string
+          empresa_id: string
+          enunciado: string
+          id: string
+          opciones: Json | null
+          orden: number
+          respuesta_correcta: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          capacitacion_id: string
+          created_at?: string
+          empresa_id: string
+          enunciado: string
+          id?: string
+          opciones?: Json | null
+          orden?: number
+          respuesta_correcta: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          capacitacion_id?: string
+          created_at?: string
+          empresa_id?: string
+          enunciado?: string
+          id?: string
+          opciones?: Json | null
+          orden?: number
+          respuesta_correcta?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluacion_preguntas_capacitacion_id_fkey"
+            columns: ["capacitacion_id"]
+            isOneToOne: false
+            referencedRelation: "capacitaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluacion_preguntas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       examenes_medicos: {
         Row: {
           concepto: string | null
@@ -2276,6 +2391,10 @@ export type Database = {
         Returns: string
       }
       get_cumplimiento_phva: { Args: { p_empresa_id: string }; Returns: Json }
+      get_evaluacion_by_firma_token: {
+        Args: { p_firma_token: string }
+        Returns: Json
+      }
       get_invitation_by_token: {
         Args: { p_token: string }
         Returns: {
@@ -2318,6 +2437,10 @@ export type Database = {
         Returns: undefined
       }
       normalize_nit: { Args: { p_nit: string }; Returns: string }
+      registrar_intento_evaluacion: {
+        Args: { p_firma_token: string; p_respuestas: Json }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "administrador" | "asistente" | "lector" | "super_admin"
