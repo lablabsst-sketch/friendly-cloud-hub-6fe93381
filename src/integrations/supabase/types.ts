@@ -269,6 +269,9 @@ export type Database = {
           created_at: string
           empleado_contratista_id: string | null
           empresa_id: string
+          fecha_asistencia: string | null
+          firma_url: string | null
+          firmado_en: string | null
           id: string
           nota: number | null
           telefono_whatsapp: string | null
@@ -280,6 +283,9 @@ export type Database = {
           created_at?: string
           empleado_contratista_id?: string | null
           empresa_id: string
+          fecha_asistencia?: string | null
+          firma_url?: string | null
+          firmado_en?: string | null
           id?: string
           nota?: number | null
           telefono_whatsapp?: string | null
@@ -291,6 +297,9 @@ export type Database = {
           created_at?: string
           empleado_contratista_id?: string | null
           empresa_id?: string
+          fecha_asistencia?: string | null
+          firma_url?: string | null
+          firmado_en?: string | null
           id?: string
           nota?: number | null
           telefono_whatsapp?: string | null
@@ -396,6 +405,7 @@ export type Database = {
           empresa_id: string
           estado: string
           fecha: string
+          fecha_cierre: string | null
           firma_token: string | null
           id: string
           link_reunion: string | null
@@ -413,6 +423,7 @@ export type Database = {
           empresa_id: string
           estado?: string
           fecha: string
+          fecha_cierre?: string | null
           firma_token?: string | null
           id?: string
           link_reunion?: string | null
@@ -430,6 +441,7 @@ export type Database = {
           empresa_id?: string
           estado?: string
           fecha?: string
+          fecha_cierre?: string | null
           firma_token?: string | null
           id?: string
           link_reunion?: string | null
