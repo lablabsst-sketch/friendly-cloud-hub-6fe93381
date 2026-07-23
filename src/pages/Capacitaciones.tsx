@@ -261,6 +261,8 @@ export default function Capacitaciones() {
 
   // Detail/attendance dialog
   const [detailOpen, setDetailOpen] = useState(false);
+  const [linkGeneral, setLinkGeneral] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
   const [selectedCap, setSelectedCap] = useState<Capacitacion | null>(null);
   const [asistencias, setAsistencias] = useState<AsistenciaRecord[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
