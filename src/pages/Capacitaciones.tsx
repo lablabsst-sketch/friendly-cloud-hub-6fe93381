@@ -529,10 +529,35 @@ export default function Capacitaciones() {
       }
     }
 
-    toast({ title: editing ? "Capacitación actualizada" : "Capacitación creada" });
-    setFormOpen(false);
-    setSaving(false);
-    fetchAll();
+    if (editing) {
+      toast({ title: "Capacitación actualizada" });
+      setFormOpen(false);
+      setSaving(false);
+      fetchAll();
+    } else {
+      const createdCap: Capacitacion = {
+        id: capId!,
+        empresa_id: payload.empresa_id,
+        titulo: payload.titulo,
+        descripcion: payload.descripcion,
+        fecha: payload.fecha,
+        fecha_cierre: payload.fecha_cierre,
+        tipo: payload.tipo,
+        duracion_horas: payload.duracion_horas,
+        responsable: payload.responsable,
+        estado: payload.estado,
+        modalidad: payload.modalidad,
+        link_reunion: payload.link_reunion,
+        archivo_url: payload.archivo_url,
+        archivo_nombre: payload.archivo_nombre ?? null,
+        created_at: new Date().toISOString(),
+      };
+      setEditing(createdCap);
+      setFormTab("eval");
+      toast({ title: "Capacitación creada", description: "Ahora agrega la evaluación (opcional)" });
+      setSaving(false);
+      fetchAll();
+    }
   };
 
   // ─── Delete ────────────────────────────────────────────────────────────────
