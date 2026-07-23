@@ -721,7 +721,7 @@ export default function Capacitaciones() {
           asistio: a.asistio ?? false,
           firma_url: a.firma_url ?? null,
           firmado_en: a.firmado_en ?? null,
-          nota: a.nota ?? null,
+          nota: a.mejor_puntaje ?? a.nota ?? null,
         })),
         empresa: { nombre: empresa.nombre ?? "Empresa", nit: empresa.nit ?? null },
       });
