@@ -250,6 +250,17 @@ export default function Capacitaciones() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [formTab, setFormTab] = useState("info");
+  const [evalDirty, setEvalDirty] = useState(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
+
+  const requestCloseForm = (open: boolean) => {
+    if (!open && evalDirty) {
+      setConfirmCloseOpen(true);
+      return;
+    }
+    setFormOpen(open);
+  };
+
 
   // Attendee selection in form
   const [attendeeEntries, setAttendeeEntries] = useState<AttendeeFormEntry[]>([]);
